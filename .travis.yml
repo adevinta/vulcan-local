@@ -1,0 +1,21 @@
+dist: bionic
+language: go
+go:
+  - 1.17
+services:
+  - docker
+script:
+  - go build -o vulcan-local main.go
+  - go test ./...
+  - docker build . -t vulcan-local
+  - ./script/test.sh
+after_success:
+  - bash -c 'source <(curl -s https://raw.githubusercontent.com/adevinta/vulcan-cicd/master/docker.sh)'
+  - zip vulcan-local-linux-amd64.zip vulcan-local
+# deploy:
+#   - provider: releases
+#     api_key: "$GITHUB_OAUTH_TOKEN"
+#     file: ./vulcan-local-linux-amd64.zip
+#     skip_cleanup: true
+#     on:
+#       tags: true
