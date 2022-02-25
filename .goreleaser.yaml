@@ -1,0 +1,85 @@
+project_name: vulcan-local
+
+builds:
+- id: vulcan-local
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - linux
+    - darwin
+    # - windows
+  goarch:
+    - amd64
+    - arm64
+  goarm:
+    - "7"
+  mod_timestamp: '{{ .CommitTimestamp }}'
+  dir: .
+  main: .
+  binary: vulcan-local
+  builder: go
+  gobinary: go
+  ldflags:
+  - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    -X main.builtBy=goreleaser
+
+archives:
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+    - goos: windows
+      format: zip
+
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    
+    # Templates of the Docker image names.
+    image_templates:
+    - "{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Tag }}"
+    - "{{ .Env.TRAVIS_REPO_SLUG }}:v{{ .Major }}"
+    - "{{ .Env.TRAVIS_REPO_SLUG }}:v{{ .Major }}.{{ .Minor }}"
+    - "{{ .Env.TRAVIS_REPO_SLUG }}:latest"
+
+    # Skips the docker push.
+    # Could be useful if you also do draft releases.
+    #
+    # If set to auto, the release will not be pushed to the Docker repository
+    #  in case there is an indicator of a prerelease in the tag, e.g. v1.0.0-rc1.
+    #
+    # Defaults to false.
+    skip_push: false
+
+    # Path to the Dockerfile (from the project root).
+    #
+    # Defaults to `Dockerfile`.
+    dockerfile: Dockerfile
+
+    # Set the "backend" for the Docker pipe.
+    # Valid options are: docker, buildx, podman, buildpacks
+    # podman is a GoReleaser Pro feature and is only available on Linux.
+    # Defaults to docker.
+    use: docker
+
+    ids: 
+    - vulcan-local
+
+    # Template of the docker build flags.
+    build_flag_templates:
+    - "--pull"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--platform=linux/amd64"
+
+    # Extra flags to be passed down to the push command.
+    # Defaults to empty.
+    push_flags:
+    - --tls-verify=false

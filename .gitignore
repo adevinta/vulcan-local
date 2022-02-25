@@ -15,4 +15,6 @@
 # vendor/
 .vscode/
 out/
+vulcan-local    
+
 dist/
