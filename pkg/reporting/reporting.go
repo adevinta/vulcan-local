@@ -145,19 +145,19 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 	buf := new(bytes.Buffer)
 	fmt.Fprint(buf, "\nCheck summary:\n\n")
 	for _, c := range cfg.Checks {
-		status := "UNKNOWN"
 		ct := c.Checktype
 		if ct == nil {
-			ct = &config.Checktype{}
-			status = "EXCLUDED"
+			// The check was excluded by filters
+			continue
 		}
+		status := "UNKNOWN"
 		res, ok := results.Checks[c.Id]
-		duration := ""
+		duration := 0.0
 		if ok {
 			status = res.Status
-			duration = fmt.Sprint(res.EndTime.Sub(res.StartTime))
+			duration = res.EndTime.Sub(res.StartTime).Seconds()
 		}
-		fmt.Fprintf(buf, " - image=%s target=%s assetType=%s status=%s duration=%s\n", ct.Image, c.Target, c.AssetType, status, duration)
+		fmt.Fprintf(buf, " - image=%s target=%s assetType=%s status=%s duration=%f\n", ct.Image, c.Target, c.AssetType, status, duration)
 	}
 	fmt.Fprint(buf, "\n")
 	l.Infof(buf.String())
