@@ -181,7 +181,6 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 
 	outputFile := cfg.Reporting.OutputFile
 	if outputFile != "" {
-
 		// TODO: Decide if we want to keep filtering JSON output by threshold and exclusion
 		// Recreates the original report map filtering the Excluded and Threshold
 		// json: Just print the reports as an slice
@@ -202,7 +201,7 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		if outputFile == "-" {
 			fmt.Fprint(os.Stderr, string(str))
 		} else {
-			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 			if err != nil {
 				return 1, fmt.Errorf("unable to open report file %s %+v", outputFile, err)
 			}

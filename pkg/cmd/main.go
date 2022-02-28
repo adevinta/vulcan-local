@@ -15,9 +15,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/phayes/freeport"
-	"github.com/sirupsen/logrus"
-
 	"github.com/adevinta/vulcan-agent/agent"
 	"github.com/adevinta/vulcan-agent/backend/docker"
 	agentconfig "github.com/adevinta/vulcan-agent/config"
@@ -28,6 +25,8 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	"github.com/adevinta/vulcan-local/pkg/sqsservice"
+	"github.com/phayes/freeport"
+	"github.com/sirupsen/logrus"
 )
 
 const defaultDockerHost = "host.docker.internal"

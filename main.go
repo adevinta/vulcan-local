@@ -26,7 +26,7 @@ func main() {
 
 	var err error
 
-	var log = logrus.New()
+	log := logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors:   false,
 		FullTimestamp:   true,

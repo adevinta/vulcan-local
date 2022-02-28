@@ -52,7 +52,7 @@ func mergeOptions(optsA map[string]interface{}, optsB map[string]interface{}) ma
 }
 
 // buildOptions generates a string encoded Now it makes the union of both options with precedence of the targetOpts.
-// TODO: Decide if it makes sense to intersect, discarding the target options not defined in the checktypeOpts
+// TODO: Decide if it makes sense to intersect, discarding the target options not defined in the checktypeOpts.
 func buildOptions(checktypeOpts, targetOpts map[string]interface{}) (string, error) {
 	totalOptions := map[string]interface{}{}
 	if len(checktypeOpts) > 0 {
@@ -71,7 +71,6 @@ func buildOptions(checktypeOpts, targetOpts map[string]interface{}) (string, err
 func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitService, l log.Logger) ([]jobrunner.Job, error) {
 	jobs := []jobrunner.Job{}
 	for i := range cfg.Checks {
-
 		// Because We want to update the original Check
 		c := &cfg.Checks[i]
 		ch, err := getCheckType(cfg, c.Type)
@@ -207,7 +206,6 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 	}
 
 	if types.IsHostname(identifier) {
-
 		// Prevent using localhost as a Hostname
 		if !regexp.MustCompile(`(?i)(localhost|127.0.0.1)`).MatchString(identifier) {
 			h := config.Target{
@@ -244,7 +242,7 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 }
 
 // GenerateChecksFromTargets expands the list of targets by inferring missing AssetTypes
-// and generates the list of checks to run based on the available Checktypes and AssetType
+// and generates the list of checks to run based on the available Checktypes and AssetType.
 func GenerateChecksFromTargets(cfg *config.Config, l log.Logger) error {
 	// Generate a new list of Targets with AssetType
 	expandedTargets := []config.Target{}

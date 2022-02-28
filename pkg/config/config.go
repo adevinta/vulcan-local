@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ChektypeRef represents a checktype with an optional prefix denoting the repository (i.e. default/vulcan-zap vulcan-zap )
+// ChektypeRef represents a checktype with an optional prefix denoting the repository (i.e. default/vulcan-zap vulcan-zap ).
 type ChecktypeRef string
 
 type Check struct {

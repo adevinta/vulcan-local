@@ -21,7 +21,7 @@ const (
 	resourcesLimit = 3
 )
 
-// Create a new extended entity to allow to filter by all the fields
+// Create a new extended entity to allow to filter by all the fields.
 type ExtendedVulnerability struct {
 	*report.CheckData
 	*report.Vulnerability
