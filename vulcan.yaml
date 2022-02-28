@@ -1,0 +1,76 @@
+conf:
+  # Variables needed by some checks.
+  vars:
+    # Credentials for cloning private repositories
+    GITHUB_ENTERPRISE_ENDPOINT: ${GITHUB_ENTERPRISE_ENDPOINT}
+    GITHUB_ENTERPRISE_TOKEN: ${GITHUB_ENTERPRISE_TOKEN}
+
+    # Credentials to pass to the checks to pull private images
+    REGISTRY_DOMAIN: ${REGISTRY_SERVER}
+    REGISTRY_USERNAME: ${REGISTRY_USERNAME}
+    REGISTRY_PASSWORD: ${REGISTRY_PASSWORD}
+
+  repositories:
+    # The checktypes in default can be accessed without prefix (i.e. vulcan-seekret or default/vulcan-seekret)
+    default: file://${TRAVIS_BUILD_DIR:-.}/script/checktypes-stable.json
+
+  # Registry credentials to pull checks from private registries
+  registries:
+    - server: ${REGISTRY_SERVER}
+      username: ${REGISTRY_USERNAME}
+      password: ${REGISTRY_PASSWORD}
+
+  # *Always*, Never, IfNotPresent
+  pullPolicy: IfNotPresent
+
+  # Number of checks to run concurrently
+  concurrency: 5
+
+targets:
+
+  - target: http://localhost:1234/
+    options:
+      max_scan_duration: 1
+
+  - target: ${TRAVIS_BUILD_DIR:-.}
+
+checks:
+
+  # Check current path
+  - type: vulcan-seekret
+    target: ${TRAVIS_BUILD_DIR:-.}
+
+  # The current remote git target
+  - type: vulcan-seekret
+    target: https://github.com/${TRAVIS_REPO_SLUG}.git
+    options:
+      branch: ${TRAVIS_COMMIT}
+
+  # Check with default options
+  # - type: vulcan-zap
+  #   target: http://localhost:1234
+  #   assetType: WebAddress
+  #   options:
+  #     depth: 1
+  #     max_scan_duration: 2
+  #     max_spider_duration: 1
+
+  # Check the docker REMOTE public image
+  - type: vulcan-trivy
+    target: appsecco/dsvw:latest
+
+reporting:
+  format: json
+  # Valid values CRITICAL, *HIGH*, MEDIUM, LOW  (default HIGH)
+  threshold: HIGH
+  exclusions:
+    - summary: Leaked
+    - affectedResource: libgcrypt
+      target: .
+    - affectedResource: busybox
+      target: .
+    - affectedResource: musl
+      target: .
+    - affectedResource: ncurses
+      target: latest
+    - fingerprint: 7820aa24a96f0fcd4717933772a8bc89552a0c1509f3d90b14d885d25e60595f

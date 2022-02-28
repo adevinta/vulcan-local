@@ -1,0 +1,5 @@
+.git
+.vscode
+.travis.yml
+*.md
+out/
