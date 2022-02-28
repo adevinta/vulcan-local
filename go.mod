@@ -5,7 +5,7 @@ go 1.17
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
-	github.com/adevinta/vulcan-agent v0.0.0-20220228081502-7af5581e0e5a
+	github.com/adevinta/vulcan-agent v0.0.0-20220228145114-50557ff2fd82
 	github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c
 	github.com/adevinta/vulcan-types v0.0.0-20211011153447-1b4d6804c22e
 	github.com/drone/envsubst v1.0.3
