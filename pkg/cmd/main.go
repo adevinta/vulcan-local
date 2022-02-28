@@ -49,10 +49,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 
 	log.SetLevel(agentlog.ParseLogLevel(cfg.Conf.LogLevel))
 
-	if cfg.Conf.PullPolicy, err = validateEnum(cfg.Conf.PullPolicy, docker.PullPolicies, docker.PullPolicyIfNotPresent); err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("wrong pullPolicy %+v", err)
-	}
-
 	if cfg.Reporting.Threshold, err = validateEnum(cfg.Reporting.Threshold, reporting.SeverityNames(), "HIGH"); err != nil {
 		return reporting.ErrorExitCode, fmt.Errorf("wrong pullPolicy %+v", err)
 	}

@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/adevinta/vulcan-agent/backend/docker"
+	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-local/pkg/cmd"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/reporting"
@@ -66,10 +66,11 @@ func main() {
 	flag.StringVar(&cfg.Conf.Repository, "u", "", fmt.Sprintf("chektypes uri (or %s)", envDefaultChecktypesUri))
 	flag.StringVar(&cfg.Conf.DockerBin, cfg.Conf.DockerBin, cfg.Conf.DockerBin, "docker binary")
 	flag.StringVar(&cfg.Conf.GitBin, cfg.Conf.GitBin, cfg.Conf.GitBin, "git binary")
-	flag.StringVar(&cfg.Conf.PullPolicy, "pullpolicy", docker.PullPolicyIfNotPresent, fmt.Sprintf("when to pull for check images %s", docker.PullPolicies))
 	flag.StringVar(&cfg.Conf.IfName, "ifname", cfg.Conf.IfName, "network interface where agent will be available for the checks")
 	flag.IntVar(&cfg.Conf.Concurrency, "concurrency", cfg.Conf.Concurrency, "max number of checks/containers to run concurrently")
-
+	flag.Func("pullpolicy", fmt.Sprintf("when to pull for check images %s", agentconfig.PullPolicies()), func(s string) error {
+		return cfg.Conf.PullPolicy.UnmarshalText([]byte(s))
+	})
 	flag.Parse()
 
 	if help {

@@ -97,6 +97,10 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdko
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
 github.com/adevinta/vulcan-agent v0.0.0-20220223181646-f7166b58218a h1:z87PzbiZGPktr8I4FLZQicX954R1sjvTVDTMjGRp47M=
 github.com/adevinta/vulcan-agent v0.0.0-20220223181646-f7166b58218a/go.mod h1:LQderQ78zE5HdJwiTrM34XVoff6/M34f83PJ4iE2uQY=
+github.com/adevinta/vulcan-agent v0.0.0-20220225091048-da2206c6246e h1:/WkN9Zaiwd6NjrdF+5rdINkS/ebCAzK1JB3ZvJxsbII=
+github.com/adevinta/vulcan-agent v0.0.0-20220225091048-da2206c6246e/go.mod h1:LQderQ78zE5HdJwiTrM34XVoff6/M34f83PJ4iE2uQY=
+github.com/adevinta/vulcan-agent v0.0.0-20220228081502-7af5581e0e5a h1:6TiZA8hrh+kCpyRG/maZrtL2gKGNyEr9F/35Oh2/plI=
+github.com/adevinta/vulcan-agent v0.0.0-20220228081502-7af5581e0e5a/go.mod h1:LQderQ78zE5HdJwiTrM34XVoff6/M34f83PJ4iE2uQY=
 github.com/adevinta/vulcan-metrics-client v0.0.0-20210317131634-8775c25303f7 h1:uBZ90Rg7jrLXZb2TCUSvxiUa1581m5CGRkJmbHwG7PU=
 github.com/adevinta/vulcan-metrics-client v0.0.0-20210317131634-8775c25303f7/go.mod h1:M+oEghaodOSKYMScXw7Vpz9DypFo6PbgIEJrAexyWBo=
 github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c h1:r5E2ZJe4FoIFrvOmTckP4b4h/EzOq8LY+9kYi1K2wPQ=

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/drone/envsubst"
 	"gopkg.in/yaml.v3"
@@ -54,18 +55,18 @@ type Registry struct {
 }
 
 type Conf struct {
-	DockerBin    string            `yaml:"dockerBin"`
-	GitBin       string            `yaml:"gitBin"`
-	PullPolicy   string            `yaml:"pullPolicy"`
-	Vars         map[string]string `yaml:"vars"`
-	Repositories map[string]string `yaml:"repositories"`
-	Repository   string            `yaml:"repository"`
-	Registries   []Registry        `yaml:"registries"`
-	LogLevel     string            `yaml:"logLevel"`
-	Concurrency  int               `yaml:"concurrency"`
-	IfName       string            `yaml:"ifName"`
-	Exclude      string            `yaml:"exclude"`
-	Include      string            `yaml:"include"`
+	DockerBin    string                 `yaml:"dockerBin"`
+	GitBin       string                 `yaml:"gitBin"`
+	PullPolicy   agentconfig.PullPolicy `yaml:"pullPolicy"`
+	Vars         map[string]string      `yaml:"vars"`
+	Repositories map[string]string      `yaml:"repositories"`
+	Repository   string                 `yaml:"repository"`
+	Registries   []Registry             `yaml:"registries"`
+	LogLevel     string                 `yaml:"logLevel"`
+	Concurrency  int                    `yaml:"concurrency"`
+	IfName       string                 `yaml:"ifName"`
+	Exclude      string                 `yaml:"exclude"`
+	Include      string                 `yaml:"include"`
 	IncludeR     *regexp.Regexp
 	ExcludeR     *regexp.Regexp
 }
