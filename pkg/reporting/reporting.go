@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-local/pkg/config"
@@ -155,7 +156,13 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 		duration := 0.0
 		if ok {
 			status = res.Status
-			duration = res.EndTime.Sub(res.StartTime).Seconds()
+
+			// If not finished we use now as end time.
+			if res.EndTime.IsZero() {
+				duration = time.Since(res.StartTime).Seconds()
+			} else {
+				duration = res.EndTime.Sub(res.StartTime).Seconds()
+			}
 		}
 		fmt.Fprintf(buf, " - image=%s target=%s assetType=%s status=%s duration=%f\n", ct.Image, c.Target, c.AssetType, status, duration)
 	}
