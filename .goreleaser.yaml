@@ -7,10 +7,10 @@ builds:
   goos:
     - linux
     - darwin
-    # - windows
+    - windows
   goarch:
     - amd64
-    - arm64
+    # - arm64
   goarm:
     - "7"
   mod_timestamp: '{{ .CommitTimestamp }}'
