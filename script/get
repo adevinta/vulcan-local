@@ -6,6 +6,10 @@ set -e
 
 TAR_FILE="$(mktemp)"
 RELEASES_URL="https://github.com/adevinta/vulcan-local/releases"
+
+# Default checktypes URI. This will be removed or changed to another url, perhaps belonging to vulcan-checks.
+DEFAULT_CHECKTYPES=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json
+
 test -z "$TMPDIR" && TMPDIR="$(mktemp -d)"
 
 last_version() {
@@ -28,4 +32,7 @@ download() {
 
 download
 tar -xf "$TAR_FILE" -C "$TMPDIR"
+
+test -z "$VULCAN_CHECKTYPES_URI" && export VULCAN_CHECKTYPES_URI=$DEFAULT_CHECKTYPES
+
 "${TMPDIR}/vulcan-local" "$@"
