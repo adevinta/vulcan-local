@@ -177,13 +177,15 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		Runtime: agentconfig.RuntimeConfig{
 			Docker: agentconfig.DockerConfig{
 				Registry: agentconfig.RegistryConfig{
-					PullPolicy: cfg.Conf.PullPolicy,
-					Auths:      auths,
+					PullPolicy:          cfg.Conf.PullPolicy,
+					BackoffMaxRetries:   5,
+					BackoffInterval:     5,
+					BackoffJitterFactor: 0.5,
+					Auths:               auths,
 				},
 			},
 		},
 	}
-
 	backend, err := docker.NewBackend(log, agentConfig, nil)
 	if err != nil {
 		return reporting.ErrorExitCode, err
