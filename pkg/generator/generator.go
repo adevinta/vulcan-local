@@ -323,11 +323,11 @@ func SendJobs(jobs []jobrunner.Job, arn, endpoint string, l log.Logger) error {
 }
 
 func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
-	if include != nil {
-		return include.Match([]byte(name))
+	if include != nil && !include.Match([]byte(name)) {
+		return false
 	}
-	if exclude != nil {
-		return !exclude.Match([]byte(name))
+	if exclude != nil && exclude.Match([]byte(name)) {
+		return false
 	}
 	return true
 }
