@@ -142,7 +142,7 @@ func FindSeverityByScore(score float32) *Severity {
 	return &severities[len(severities)-1]
 }
 
-func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
+func ShowSummary(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
 	buf := new(bytes.Buffer)
 	fmt.Fprint(buf, "\nCheck summary:\n\n")
 	for _, c := range cfg.Checks {
@@ -168,6 +168,32 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 	}
 	fmt.Fprint(buf, "\n")
 	l.Infof(buf.String())
+}
+
+func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
+	statusMap := map[string]int{}
+	for _, c := range cfg.Checks {
+		ct := c.Checktype
+		if ct == nil {
+			// The check was excluded by filters
+			continue
+		}
+		status := "UNKNOWN"
+		res, ok := results.Checks[c.Id]
+		if ok {
+			status = res.Status
+		}
+		if n, ok := statusMap[status]; ok {
+			statusMap[status] = n + 1
+		} else {
+			statusMap[status] = 1
+		}
+	}
+	s := ""
+	for k, v := range statusMap {
+		s += fmt.Sprintf("%s:%d ", k, v)
+	}
+	l.Infof("Check progress [%s]", s)
 }
 
 func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) (int, error) {
