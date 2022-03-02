@@ -4,13 +4,11 @@
 
 set -e
 
-TAR_FILE="$(mktemp)"
-RELEASES_URL="https://github.com/adevinta/vulcan-local/releases"
-
-# Default checktypes URI. This will be removed or changed to another url, perhaps belonging to vulcan-checks.
-DEFAULT_CHECKTYPES=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json
-
-test -z "$TMPDIR" && TMPDIR="$(mktemp -d)"
+: "${INSTALL_DIR:="/usr/local/bin"}"
+: "${USE_SUDO:="true"}"
+: "${BINARY_NAME:="vulcan-local"}"
+: "${RELEASES_URL:="https://github.com/adevinta/vulcan-local/releases"}"
+: "${DEFAULT_CHECKTYPES:="https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"}"
 
 last_version() {
   curl -sL -o /dev/null -w "%{url_effective}" "$RELEASES_URL/latest" | 
@@ -20,19 +18,143 @@ last_version() {
 }
 
 download() {
-  test -z "$VERSION" && VERSION="$(last_version)"
-  test -z "$VERSION" && {
+  TMPDIR=$(mktemp -dt vulcan-installer-XXXX)
+
+  test -z "$DESIRED_VERSION" && DESIRED_VERSION="$(last_version)"
+  test -z "$DESIRED_VERSION" && {
     echo "Unable to get vulcan-local version." >&2
     exit 1
   }
+  DOWNLOAD_URL="$RELEASES_URL/download/$DESIRED_VERSION/vulcan-local_$(uname -s)_$(uname -m).tar.gz"
 
-  curl -s -L -o "$TAR_FILE" \
-    "$RELEASES_URL/download/$VERSION/vulcan-local_$(uname -s)_$(uname -m).tar.gz"
+  set +e
+
+  if ! wget -q -O "$TMPDIR/tgz" "$DOWNLOAD_URL"; then
+    echo "Unable to get $DESIRED_VERSION from $DOWNLOAD_URL"
+    exit 1
+  fi
+
+  tar -C "$TMPDIR" -xzf "$TMPDIR/tgz"
+  if ! tar -C "$TMPDIR" -xzf "$TMPDIR/tgz"; then
+    echo "Unable to untar from $DOWNLOAD_URL"
+    exit 1
+  fi
+
+  if [ ! -f "$TMPDIR/$BINARY_NAME" ]; then
+    echo "Unable to extract $BINARY_NAME $DOWNLOAD_URL"
+    exit 1
+  fi
+
+  echo "Downloaded $BINARY_NAME from $DOWNLOAD_URL"
+  set -e
 }
 
+# runs the given command as root (detects if we are root already or Mac)
+runAsRoot() {
+  if [ "$(uname -s)" = "Darwin" ] || [ "$(id -u)" -eq 0 ] || [ "$USE_SUDO" = "false" ]; then
+    "${@}"
+  else
+    sudo "${@}"
+  fi
+}
+
+install() {
+  echo "Preparing to install $BINARY_NAME into $INSTALL_DIR"
+  runAsRoot cp "$TMPDIR/$BINARY_NAME" $INSTALL_DIR
+  echo "$BINARY_NAME installed into $INSTALL_DIR/$BINARY_NAME"
+}
+
+run() {
+  if [ -z "$VULCAN_CHECKTYPES_URI" ]; then
+    echo "Using checktypes from $DEFAULT_CHECKTYPES"
+    export VULCAN_CHECKTYPES_URI=$DEFAULT_CHECKTYPES
+  fi
+
+  echo "$BINARY_NAME ${*}"
+  "${TMPDIR}/vulcan-local" "$@"
+}
+
+
+cleanup() {
+  echo "Cleaning up"
+  if [ -d "${TMPDIR:-}" ]; then
+    rm -rf "$TMPDIR"
+  fi
+}
+
+# help provides possible cli installation arguments
+help () {
+  echo "Accepted cli arguments are:"
+  echo "  [--help|-h ] ->> prints this help"
+  echo "  [--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub"
+  echo "  [--no-sudo]  ->> install without sudo"
+  echo "  [--run|--] ... ->> Skip install and run the downloaded $BINARY_NAME temp binary with the extra params"
+}
+
+# Set debug if desired
+if [ "${DEBUG}" = "true" ]; then
+  set -x
+fi
+
+
+# Parsing input arguments (if any)
+export INPUT_ARGUMENTS="${*}"
+set -u
+while [ $# -gt 0 ]; do
+  case $1 in
+    '--version'|-v)
+      shift
+      if [ $# -ne 0 ]; then
+          export DESIRED_VERSION="${1}"
+      else
+          echo "Please provide the desired version. e.g. --version v3.0.0"
+          exit 0
+      fi
+      ;;
+    '--run'|'--')
+      RUN=true
+      shift
+      if [ $# -eq 0 ]; then
+          echo "Please provide the $BINARY_NAME params after '--'."
+          exit 1
+      fi
+      break
+      ;;
+    '--no-sudo')
+      USE_SUDO="false"
+      ;;
+    '--help'|-h)
+      help
+      exit 0
+      ;;
+    *)
+      echo "Invalid parameter $1"
+      help
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+set +u
+
 download
-tar -xf "$TAR_FILE" -C "$TMPDIR"
 
-test -z "$VULCAN_CHECKTYPES_URI" && export VULCAN_CHECKTYPES_URI=$DEFAULT_CHECKTYPES
+if [ "$RUN" = "true" ]; then
 
-"${TMPDIR}/vulcan-local" "$@"
+  echo "Skipping install"
+
+  # Save the exit code for later
+  set +e
+  run "${@}"
+  EXIT_CODE=$?
+
+else
+
+  install
+
+fi
+
+cleanup
+
+exit ${EXIT_CODE:-0}
