@@ -39,7 +39,7 @@ func main() {
 			DockerBin:   "docker",
 			GitBin:      "git",
 			LogLevel:    "info",
-			Concurrency: 5,
+			Concurrency: 3,
 			IfName:      "docker0",
 			Vars:        map[string]string{},
 		},
