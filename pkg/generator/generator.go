@@ -332,17 +332,6 @@ func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
 	return true
 }
 
-func validImageURI(imageURI string) error {
-	// Based on https://github.com/distribution/distribution/blob/main/reference/reference.go#L1-L24
-	// A tag is mandatory
-	re := regexp.MustCompile(`(?i)(?P<name>[a-z0-9]+(?:[-_./][a-z0-9]+)*):(?P<tag>[\w][\w.-]{0,127})`)
-	matches := re.FindStringSubmatch(imageURI)
-	if matches == nil {
-		return fmt.Errorf("not a valid image reference image='%s'", imageURI)
-	}
-	return nil
-}
-
 func ImportRepositories(cfg *config.Config, l log.Logger) error {
 	for key, uri := range cfg.Conf.Repositories {
 		err := config.AddRepo(cfg, uri, key, l)
