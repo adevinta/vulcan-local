@@ -103,9 +103,8 @@ type Manifest struct {
 
 func GetManifestFromUrl(url string) ([]Checktype, error) {
 	client := http.Client{
-		Timeout: time.Second * 5, // Timeout after 2 seconds
+		Timeout: time.Second * 10,
 	}
-
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

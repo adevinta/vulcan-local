@@ -6,8 +6,36 @@ This tool is under active development and for sure will break compatibility unti
 
 ## Installing
 
+From source code
+
 ```sh
+# Last release version
 go install github.com/adevinta/vulcan-local@latest
+
+# The master version
+go install github.com/adevinta/vulcan-local@master
+```
+
+Install binary releases
+
+```sh
+# Install last release
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh
+
+# Install specific version
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- --version v0.0.1
+
+# Show available options
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- --help
+Accepted cli arguments are:
+  [--help|-h ] ->> prints this help
+  [--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub
+  [--no-sudo]  ->> install without sudo
+  [--run|--] ... ->> Skip install and run the downloaded vulcan-local temp binary with the extra params
+
+# Executing without installing
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- \
+  --run -t .
 ```
 
 ## vulcan.yaml config file

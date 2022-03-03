@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-local/pkg/config"
@@ -141,7 +142,7 @@ func FindSeverityByScore(score float32) *Severity {
 	return &severities[len(severities)-1]
 }
 
-func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
+func ShowSummary(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
 	buf := new(bytes.Buffer)
 	fmt.Fprint(buf, "\nCheck summary:\n\n")
 	for _, c := range cfg.Checks {
@@ -155,12 +156,44 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 		duration := 0.0
 		if ok {
 			status = res.Status
-			duration = res.EndTime.Sub(res.StartTime).Seconds()
+
+			// If not finished we use now as end time.
+			if res.EndTime.IsZero() {
+				duration = time.Since(res.StartTime).Seconds()
+			} else {
+				duration = res.EndTime.Sub(res.StartTime).Seconds()
+			}
 		}
 		fmt.Fprintf(buf, " - image=%s target=%s assetType=%s status=%s duration=%f\n", ct.Image, c.Target, c.AssetType, status, duration)
 	}
 	fmt.Fprint(buf, "\n")
 	l.Infof(buf.String())
+}
+
+func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
+	statusMap := map[string]int{}
+	for _, c := range cfg.Checks {
+		ct := c.Checktype
+		if ct == nil {
+			// The check was excluded by filters
+			continue
+		}
+		status := "UNKNOWN"
+		res, ok := results.Checks[c.Id]
+		if ok {
+			status = res.Status
+		}
+		if n, ok := statusMap[status]; ok {
+			statusMap[status] = n + 1
+		} else {
+			statusMap[status] = 1
+		}
+	}
+	s := ""
+	for k, v := range statusMap {
+		s += fmt.Sprintf("%s:%d ", k, v)
+	}
+	l.Infof("Check progress [%s]", strings.TrimSpace(s))
 }
 
 func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) (int, error) {

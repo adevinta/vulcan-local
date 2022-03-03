@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/adevinta/vulcan-agent/agent"
 	"github.com/adevinta/vulcan-agent/backend/docker"
@@ -177,17 +178,32 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		Runtime: agentconfig.RuntimeConfig{
 			Docker: agentconfig.DockerConfig{
 				Registry: agentconfig.RegistryConfig{
-					PullPolicy: cfg.Conf.PullPolicy,
-					Auths:      auths,
+					PullPolicy:          cfg.Conf.PullPolicy,
+					BackoffMaxRetries:   5,
+					BackoffInterval:     5,
+					BackoffJitterFactor: 0.5,
+					Auths:               auths,
 				},
 			},
 		},
 	}
-
 	backend, err := docker.NewBackend(log, agentConfig, nil)
 	if err != nil {
 		return reporting.ErrorExitCode, err
 	}
+
+	// Show progress to prevent CI/CD complaining of no output for long time
+	quitProgress := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-quitProgress:
+				return
+			case <-time.After(30 * time.Second):
+				reporting.ShowProgress(cfg, results, log)
+			}
+		}
+	}()
 
 	logAgent := log
 	// Mute the agent to Error except if in Debug mode
@@ -200,7 +216,11 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	if exit != 0 {
 		return reporting.ErrorExitCode, fmt.Errorf("error running the agent exit=%d", exit)
 	}
+
+	quitProgress <- true
+
 	reporting.ShowProgress(cfg, results, log)
+	reporting.ShowSummary(cfg, results, log)
 
 	reportCode, err := reporting.Generate(cfg, results, log)
 	if err != nil {
@@ -292,11 +312,4 @@ func GetHostIP(l agentlog.Logger) string {
 	ip := strings.TrimSuffix(cmdOut.String(), "\n")
 	l.Debugf("Hostip=%s", ip)
 	return ip
-}
-
-func getVar(cfg *config.Config, name string) string {
-	if value, ok := cfg.Conf.Vars[name]; ok {
-		return value
-	}
-	return ""
 }
