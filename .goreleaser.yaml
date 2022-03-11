@@ -10,9 +10,17 @@ builds:
     - windows
   goarch:
     - amd64
-    # - arm64
+    - arm
+    - arm64
   goarm:
     - "7"
+  ignore:
+    - goos: darwin
+      goarch: arm
+    - goos: windows
+      goarch: arm
+    - goos: windows
+      goarch: arm64
   mod_timestamp: '{{ .CommitTimestamp }}'
   dir: .
   main: .
@@ -39,7 +47,7 @@ dockers:
   -
     goos: linux
     goarch: amd64
-    
+
     # Templates of the Docker image names.
     image_templates:
     - "{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Tag }}"
@@ -67,7 +75,7 @@ dockers:
     # Defaults to docker.
     use: docker
 
-    ids: 
+    ids:
     - vulcan-local
 
     # Template of the docker build flags.
