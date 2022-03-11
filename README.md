@@ -60,7 +60,7 @@ conf:
     # A local checktype uri
     default: file://./script/checktypes-stable.json
 
-# List of targets to scan generating checks from all available checktypes 
+# List of targets to scan generating checks from all available checktypes
 targets:
   - target: .
   - target: http://localhost:1234/
@@ -95,7 +95,7 @@ Usage of vulcan-local:
   -c string
     	config file (i.e. -c vulcan.yaml)
   -concurrency int
-    	max number of checks/containers to run concurrently (default 5)
+    	max number of checks/containers to run concurrently (default 3)
   -docker string
     	docker binary (default "docker")
   -e string
@@ -111,8 +111,8 @@ Usage of vulcan-local:
     	log level [panic, fatal, error, warn, info, debug] (default "info")
   -o string
     	options related to the target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
-  -pullpolicy string
-    	when to pull for check images [Always IfNotPresent Never] (default "IfNotPresent")
+  -pullpolicy value
+    	when to pull for check images [Always IfNotPresent Never]
   -r string
     	results file (i.e. -r results.json)
   -s string
@@ -121,6 +121,8 @@ Usage of vulcan-local:
     	target to check
   -u string
     	chektypes uri (or VULCAN_CHECKTYPES_URI)
+  -version
+    	print version
 ```
 
 Exit codes:
@@ -213,7 +215,7 @@ In the following examples the local image reference `vulcan-local` will e used.
 Start the target application
 
 ```sh
-docker run -p 1234:8000 --restart unless-stopped -d appsecco/dsvw 
+docker run -p 1234:8000 --restart unless-stopped -d appsecco/dsvw
 ```
 
 Start scan using a local config file
