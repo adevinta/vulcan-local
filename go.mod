@@ -7,7 +7,7 @@ go 1.17
 require (
 	github.com/adevinta/vulcan-agent v0.0.0-20220228145114-50557ff2fd82
 	github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c
-	github.com/adevinta/vulcan-types v0.0.0-20211011153447-1b4d6804c22e
+	github.com/adevinta/vulcan-types v0.0.0-20220310133120-53f000e5196f
 	github.com/drone/envsubst v1.0.3
 	github.com/google/uuid v1.3.0
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b

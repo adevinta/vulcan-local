@@ -103,6 +103,8 @@ github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c h1:r5E2ZJe4
 github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c/go.mod h1:mj4gaLILjExwR6TV0zCyoSqNFaPBaGI9ngZwiOdPtA0=
 github.com/adevinta/vulcan-types v0.0.0-20211011153447-1b4d6804c22e h1:w6DYSNJF/fjq4+rIiqTw2Z9Knw1TG8/7RaRtYEyOGuU=
 github.com/adevinta/vulcan-types v0.0.0-20211011153447-1b4d6804c22e/go.mod h1:IXrsSLYBsjae65TrMgE9yTbtaHRMjJUkZhPAQJIWXQM=
+github.com/adevinta/vulcan-types v0.0.0-20220310133120-53f000e5196f h1:r843CAEghseSW+942cV0AyK34yKR0rynxrmROrb/D/U=
+github.com/adevinta/vulcan-types v0.0.0-20220310133120-53f000e5196f/go.mod h1:IXrsSLYBsjae65TrMgE9yTbtaHRMjJUkZhPAQJIWXQM=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
