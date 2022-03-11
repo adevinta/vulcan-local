@@ -9,6 +9,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
+	"runtime/debug"
 	"time"
 
 	agentconfig "github.com/adevinta/vulcan-agent/config"
@@ -19,6 +21,13 @@ import (
 )
 
 const envDefaultChecktypesUri = "VULCAN_CHECKTYPES_URI"
+
+var (
+	version = "dev"
+	commit  = ""
+	date    = ""
+	builtBy = ""
+)
 
 func main() {
 	exitCode := 1
@@ -50,10 +59,11 @@ func main() {
 		Checks:     []config.Check{},
 	}
 
-	var help bool
+	var showHelp, showVersion bool
 	var configFile, targetOptions string
 	cmdTarget := config.Target{}
-	flag.BoolVar(&help, "h", false, "print usage")
+	flag.BoolVar(&showHelp, "h", false, "print usage")
+	flag.BoolVar(&showVersion, "version", false, "print version")
 	flag.StringVar(&configFile, "c", "", "config file (i.e. -c vulcan.yaml)")
 	flag.StringVar(&cfg.Conf.LogLevel, "l", cfg.Conf.LogLevel, "log level [panic, fatal, error, warn, info, debug]")
 	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (i.e. -r results.json)")
@@ -73,8 +83,28 @@ func main() {
 	})
 	flag.Parse()
 
-	if help {
+	if showHelp {
 		flag.Usage()
+		return
+	}
+
+	if showVersion {
+		result := fmt.Sprintf("vulcan-local version: %s", version)
+		if commit != "" {
+			result = fmt.Sprintf("%s\ncommit: %s", result, commit)
+		}
+		if date != "" {
+			result = fmt.Sprintf("%s\nbuilt at: %s", result, date)
+		}
+		if builtBy != "" {
+			result = fmt.Sprintf("%s\nbuilt by: %s", result, builtBy)
+		}
+		result = fmt.Sprintf("%s\ngoos: %s\ngoarch: %s", result, runtime.GOOS, runtime.GOARCH)
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
+			result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
+		}
+		fmt.Print(result)
+		fmt.Print("\n")
 		return
 	}
 
