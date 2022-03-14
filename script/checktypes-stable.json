@@ -63,7 +63,7 @@
             "assets": [
                 "GitRepository"
             ]
-        },      
+        },
         {
             "name": "vulcan-semgrep",
             "description": "Finds potential issues in source code from a Git repository using Semgrep",
@@ -108,7 +108,8 @@
             "image": "vulcansec/vulcan-exposed-http:latest",
             "required_vars": null,
             "assets": [
-                "Hostname", "IP"
+                "Hostname",
+                "IP"
             ]
         },
         {

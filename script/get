@@ -11,9 +11,9 @@ set -e
 : "${DEFAULT_CHECKTYPES:="https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"}"
 
 last_version() {
-  curl -sL -o /dev/null -w "%{url_effective}" "$RELEASES_URL/latest" | 
-    rev | 
-    cut -f1 -d'/'| 
+  curl -sL -o /dev/null -w "%{url_effective}" "$RELEASES_URL/latest" |
+    rev |
+    cut -f1 -d'/'|
     rev
 }
 
