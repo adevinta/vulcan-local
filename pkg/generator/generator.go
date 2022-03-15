@@ -74,7 +74,7 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			continue
 		}
 
-		if !filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
+		if !filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR, GetPolicy(cfg)) {
 			l.Debugf("Skipping filtered check=%s", ch.Name)
 			continue
 		}
@@ -295,8 +295,17 @@ func ComputeFingerprint(args ...interface{}) string {
 
 func AddAssetChecks(cfg *config.Config, a config.Target, l log.Logger) error {
 	checks := []config.Check{}
+	var policy config.Policy
 	for ref, ch := range cfg.CheckTypes {
-		if stringInSlice(a.AssetType, ch.Assets) && filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
+		if cfg.Conf.Policy != "" {
+			policy = GetPolicy(cfg)
+		}
+		if stringInSlice(a.AssetType, ch.Assets) && filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR, policy) {
+			for _, c := range policy.Checks {
+				if ch.Name == string(c.Type) {
+					a.Options = mergeOptions(a.Options, c.Options)
+				}
+			}
 			checks = append(checks, config.Check{
 				Type:      ref,
 				Target:    a.Target,
@@ -325,11 +334,19 @@ func SendJobs(jobs []jobrunner.Job, arn, endpoint string, l log.Logger) error {
 	return nil
 }
 
-func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
+func filterChecktype(name string, include, exclude *regexp.Regexp, policy config.Policy) bool {
 	if include != nil && !include.Match([]byte(name)) {
 		return false
 	}
 	if exclude != nil && exclude.Match([]byte(name)) {
+		return false
+	}
+	if len(policy.Checks) > 0 {
+		for _, p := range policy.Checks {
+			if name == string(p.Type) {
+				return true
+			}
+		}
 		return false
 	}
 	return true
@@ -370,4 +387,13 @@ func GetValidDirectory(path string) (string, error) {
 		return "", fmt.Errorf("not a directory %s", path)
 	}
 	return path, nil
+}
+
+func GetPolicy(cfg *config.Config) config.Policy {
+	for _, p := range cfg.Policies {
+		if p.Name == cfg.Conf.Policy {
+			return p
+		}
+	}
+	return config.Policy{}
 }

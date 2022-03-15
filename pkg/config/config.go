@@ -48,6 +48,12 @@ type Config struct {
 	Checks     []Check                    `yaml:"checks"`
 	Targets    []Target                   `yaml:"targets"`
 	CheckTypes map[ChecktypeRef]Checktype `yaml:"checkTypes"`
+	Policies   []Policy                   `yaml:"policies"`
+}
+
+type Policy struct {
+	Name   string  `yaml:"name"`
+	Checks []Check `yaml:"checks"`
 }
 
 type Registry struct {
@@ -70,6 +76,7 @@ type Conf struct {
 	Include      string                 `yaml:"include"`
 	IncludeR     *regexp.Regexp
 	ExcludeR     *regexp.Regexp
+	Policy       string
 }
 
 type Exclusion struct {
@@ -320,4 +327,28 @@ func GetCheckById(cfg *Config, id string) *Check {
 		}
 	}
 	return nil
+}
+
+func CheckPolicies(cfg *Config, l log.Logger) error {
+	if cfg.Conf.Policy == "" {
+		return nil
+	}
+	for _, p := range cfg.Policies {
+		if p.Name == cfg.Conf.Policy {
+			l.Infof("applying policy %s", p.Name)
+			for _, pc := range p.Checks {
+				e := false
+				for _, c := range cfg.Checks {
+					if pc.Checktype == c.Checktype {
+						e = true
+					}
+				}
+				if !e {
+					cfg.Checks = append(cfg.Checks, pc)
+				}
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("policy %s does not exist, exiting", cfg.Conf.Policy)
 }
