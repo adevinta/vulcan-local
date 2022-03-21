@@ -18,51 +18,6 @@ import (
 	report "github.com/adevinta/vulcan-report"
 )
 
-type Severity struct {
-	Name      string
-	Threshold float32
-	Exit      int
-	Color     int
-}
-
-const (
-	ErrorExitCode   = 1
-	SuccessExitCode = 0
-)
-
-var severities = []Severity{
-	{
-		Name:      "CRITICAL",
-		Threshold: 9.0,
-		Exit:      104,
-		Color:     35, // Purple
-	},
-	{
-		Name:      "HIGH",
-		Threshold: 7.0,
-		Exit:      103,
-		Color:     31, // Red
-	},
-	{
-		Name:      "MEDIUM",
-		Threshold: 4.0,
-		Exit:      102,
-		Color:     33, // Yellow
-	},
-	{
-		Name:      "LOW",
-		Threshold: 0.1,
-		Exit:      101,
-		Color:     36, // Light blue
-	},
-	{
-		Name:      "ALL",
-		Threshold: 0,
-		Exit:      SuccessExitCode,
-		Color:     36, // Light blue
-	},
-}
-
 func isExcluded(v *ExtendedVulnerability, ex *[]config.Exclusion) bool {
 	for _, e := range *ex {
 		if strings.Contains(v.Target, e.Target) &&
@@ -101,7 +56,7 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 			extended := ExtendedVulnerability{
 				CheckData:     &r.CheckData,
 				Vulnerability: &v,
-				Severity:      FindSeverityByScore(v.Score),
+				Severity:      config.FindSeverityByScore(v.Score).Data(),
 			}
 			for _, s := range cfg.Checks {
 				if s.Id == r.CheckID {
@@ -114,32 +69,6 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 		}
 	}
 	return vulns
-}
-
-func FindSeverity(name string) (*Severity, error) {
-	for i, t := range severities {
-		if strings.EqualFold(name, t.Name) {
-			return &severities[i], nil
-		}
-	}
-	return nil, fmt.Errorf("invalid severity %s, allowed values %v", name, SeverityNames())
-}
-
-func SeverityNames() []string {
-	names := []string{}
-	for _, t := range severities {
-		names = append(names, t.Name)
-	}
-	return names
-}
-
-func FindSeverityByScore(score float32) *Severity {
-	for _, s := range severities {
-		if score >= s.Threshold {
-			return &s
-		}
-	}
-	return &severities[len(severities)-1]
 }
 
 func ShowSummary(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
@@ -198,13 +127,10 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 
 func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) (int, error) {
 	if cfg.Reporting.Format != "json" {
-		return 1, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
+		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
 	}
 
-	requested, err := FindSeverity(cfg.Reporting.Threshold)
-	if err != nil {
-		return ErrorExitCode, err
-	}
+	requested := cfg.Reporting.Severity.Data()
 
 	// Print results when no output file is set
 	vs := parseReports(results.Checks, cfg, l)
@@ -236,19 +162,20 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		} else {
 			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 			if err != nil {
-				return 1, fmt.Errorf("unable to open report file %s %+v", outputFile, err)
+				return config.ErrorExitCode, fmt.Errorf("unable to open report file %s %+v", outputFile, err)
 			}
 			defer f.Close()
 			if _, err := f.Write(str); err != nil {
-				return 1, fmt.Errorf("unable to write report file %s %+v", outputFile, err)
+				return config.ErrorExitCode, fmt.Errorf("unable to write report file %s %+v", outputFile, err)
 			}
 		}
 	}
 
 	var rs string
-	for _, s := range severities {
+	for _, s := range config.Severities() {
+		sd := s.Data()
 		for _, v := range vs {
-			if v.Severity.Name == s.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
+			if v.Severity.Name == sd.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
 				rs = fmt.Sprintf("%s%s", rs, printVulnerability(&v, l))
 			}
 		}
@@ -265,9 +192,9 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		}
 	}
 
-	if current := FindSeverityByScore(maxScore); current.Threshold >= requested.Threshold {
+	if current := config.FindSeverityByScore(maxScore).Data(); current.Threshold >= requested.Threshold {
 		return current.Exit, nil
 	}
 
-	return 0, nil
+	return config.SuccessExitCode, nil
 }

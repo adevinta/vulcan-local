@@ -78,7 +78,7 @@ type Exclusion struct {
 }
 
 type Reporting struct {
-	Threshold  string      `yaml:"threshold"`
+	Severity   Severity    `yaml:"severity"`
 	Format     string      `yaml:"format"`
 	OutputFile string      `yaml:"outputFile"`
 	Exclusions []Exclusion `yaml:"exclusions"`
@@ -98,6 +98,126 @@ type Checktype struct {
 
 type Manifest struct {
 	CheckTypes []Checktype
+}
+
+type Severity int
+
+const (
+	SeverityCritical Severity = iota
+	SeverityHigh
+	SeverityMedium
+	SeverityLow
+	SeverityInfo
+)
+
+const (
+	ErrorExitCode   = 1
+	SuccessExitCode = 0
+)
+
+type SeverityData struct {
+	Severity  Severity
+	Name      string
+	Threshold float32
+	Exit      int
+	Color     int
+}
+
+var severities = []SeverityData{
+	{
+		Severity:  SeverityCritical,
+		Name:      "CRITICAL",
+		Threshold: 9.0,
+		Exit:      104,
+		Color:     35, // Purple
+	},
+	{
+		Severity:  SeverityHigh,
+		Name:      "HIGH",
+		Threshold: 7.0,
+		Exit:      103,
+		Color:     31, // Red
+	},
+	{
+		Severity:  SeverityMedium,
+		Name:      "MEDIUM",
+		Threshold: 4.0,
+		Exit:      102,
+		Color:     33, // Yellow
+	},
+	{
+		Severity:  SeverityLow,
+		Name:      "LOW",
+		Threshold: 0.1,
+		Exit:      101,
+		Color:     36, // Light blue
+	},
+	{
+		Severity:  SeverityInfo,
+		Name:      "INFO",
+		Threshold: 0,
+		Exit:      SuccessExitCode,
+		Color:     36, // Light blue
+	},
+}
+
+// MarshalText returns string representation of a Severity instance.
+func (a *Severity) MarshalText() (text []byte, err error) {
+	s, err := a.String()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
+}
+
+// UnmarshalText creates a Severity from its string representation.
+func (a *Severity) UnmarshalText(text []byte) error {
+	val := string(text)
+	for _, v := range severities {
+		if v.Name == val {
+			*a = v.Severity
+			return nil
+		}
+	}
+	return fmt.Errorf("error value %s is not a valid Severity value", val)
+}
+
+func SeverityNames() []string {
+	s := []string{}
+	for _, v := range severities {
+		s = append(s, v.Name)
+	}
+	return s
+}
+
+func Severities() []Severity {
+	s := []Severity{}
+	for _, v := range severities {
+		s = append(s, v.Severity)
+	}
+	return s
+}
+
+func (a Severity) String() (string, error) {
+	return a.Data().Name, nil
+}
+
+func (a Severity) Data() *SeverityData {
+	for _, v := range severities {
+		if v.Severity == a {
+			return &v
+		}
+	}
+	return &SeverityData{}
+}
+
+func FindSeverityByScore(score float32) Severity {
+	for _, s := range severities {
+		if score >= s.Threshold {
+			return s.Severity
+		}
+	}
+	return severities[len(severities)-1].Severity
 }
 
 func GetManifestFromUrl(url string) ([]Checktype, error) {
