@@ -90,8 +90,8 @@ Usage:
 
 ```sh
 Usage of vulcan-local:
-  -a string
-    	asset type (WebAddress, ...)
+  -a value
+    	asset type of the last target (-t)
   -c string
     	config file (i.e. -c vulcan.yaml)
   -concurrency int
@@ -109,16 +109,16 @@ Usage of vulcan-local:
     	network interface where agent will be available for the checks (default "docker0")
   -l string
     	log level [panic, fatal, error, warn, info, debug] (default "info")
-  -o string
-    	options related to the target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
+  -o value
+    	options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
   -pullpolicy value
     	when to pull for check images [Always IfNotPresent Never]
   -r string
     	results file (i.e. -r results.json)
   -s string
     	filter by severity [CRITICAL HIGH MEDIUM LOW ALL]
-  -t string
-    	target to check
+  -t value
+    	target to scan. Can be used multiple times.
   -u string
     	chektypes uri (or VULCAN_CHECKTYPES_URI)
   -version

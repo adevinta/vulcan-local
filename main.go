@@ -59,9 +59,10 @@ func main() {
 		Checks:     []config.Check{},
 	}
 
+	cmdTargets := []*config.Target{}
+
 	var showHelp, showVersion bool
-	var configFile, targetOptions string
-	cmdTarget := config.Target{}
+	var configFile string
 	flag.BoolVar(&showHelp, "h", false, "print usage")
 	flag.BoolVar(&showVersion, "version", false, "print version")
 	flag.StringVar(&configFile, "c", "", "config file (i.e. -c vulcan.yaml)")
@@ -69,9 +70,36 @@ func main() {
 	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (i.e. -r results.json)")
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
 	flag.StringVar(&cfg.Conf.Exclude, "e", cfg.Conf.Exclude, "exclude checktype regex")
-	flag.StringVar(&cmdTarget.Target, "t", "", "target to check")
-	flag.StringVar(&targetOptions, "o", "", `options related to the target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')`)
-	flag.StringVar(&cmdTarget.AssetType, "a", "", "asset type (WebAddress, ...)")
+	flag.Func("t", "target to scan. Can be used multiple times.", func(s string) error {
+		cmdTargets = append(cmdTargets, &config.Target{
+			Target: s,
+		})
+		return nil
+	})
+	flag.Func("a", "asset type of the last target (-t)", func(s string) error {
+		if len(cmdTargets) == 0 {
+			return fmt.Errorf("missing target")
+		}
+		lastTarget := cmdTargets[len(cmdTargets)-1]
+		if lastTarget.AssetType != "" {
+			return fmt.Errorf("asset type already defined for %s", lastTarget.Target)
+		}
+		lastTarget.AssetType = s
+		return nil
+	})
+	flag.Func("o", `options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')`, func(s string) error {
+		if len(cmdTargets) == 0 {
+			return fmt.Errorf("missing target")
+		}
+		lastTarget := cmdTargets[len(cmdTargets)-1]
+		if lastTarget.Options != nil {
+			return fmt.Errorf("options already defined for target %s", lastTarget.Target)
+		}
+		if err := json.Unmarshal([]byte(s), &lastTarget.Options); err != nil {
+			return fmt.Errorf("unable to parse options %v", err)
+		}
+		return nil
+	})
 	flag.StringVar(&cfg.Reporting.Threshold, "s", cfg.Reporting.Threshold, fmt.Sprintf("filter by severity %v", reporting.SeverityNames()))
 	flag.StringVar(&cfg.Conf.Repository, "u", "", fmt.Sprintf("chektypes uri (or %s)", envDefaultChecktypesUri))
 	flag.StringVar(&cfg.Conf.DockerBin, cfg.Conf.DockerBin, cfg.Conf.DockerBin, "docker binary")
@@ -124,20 +152,14 @@ func main() {
 		flag.Parse()
 	}
 
-	if cmdTarget.Target != "" {
-		if targetOptions != "" {
-			if err = json.Unmarshal([]byte(targetOptions), &cmdTarget.Options); err != nil {
-				log.Errorf("unable to parse options %+v", err)
-				return
-			}
-		}
-		cfg.Targets = append(cfg.Targets, cmdTarget)
-	} else {
-		if targetOptions != "" {
-			log.Errorf("Options without target are not allowed")
-			return
+	// Overwrite config targets in case of command line targets
+	if len(cmdTargets) > 0 {
+		cfg.Targets = []config.Target{}
+		for i := range cmdTargets {
+			cfg.Targets = append(cfg.Targets, *cmdTargets[i])
 		}
 	}
+
 	exitCode, err = cmd.Run(cfg, log)
 	if err != nil {
 		log.Print(err)
