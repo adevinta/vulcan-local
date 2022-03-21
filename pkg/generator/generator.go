@@ -25,14 +25,7 @@ import (
 )
 
 func getCheckType(cfg *config.Config, checkTypeRef config.ChecktypeRef) (*config.Checktype, error) {
-	names := strings.Split(string(checkTypeRef), "/")
-	repo := "default"
-	name := names[0]
-	if len(names) == 2 {
-		repo = names[0]
-		name = names[1]
-	}
-	if ct, ok := cfg.CheckTypes[config.ChecktypeRef(fmt.Sprintf("%s/%s", repo, name))]; ok {
+	if ct, ok := cfg.CheckTypes[checkTypeRef]; ok {
 		return &ct, nil
 	} else {
 		return nil, fmt.Errorf("unable to find checktype ref %s", checkTypeRef)
@@ -333,16 +326,10 @@ func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
 }
 
 func ImportRepositories(cfg *config.Config, l log.Logger) error {
-	for key, uri := range cfg.Conf.Repositories {
-		err := config.AddRepo(cfg, uri, key, l)
+	for _, uri := range cfg.Conf.Repositories {
+		err := config.AddRepo(cfg, uri, l)
 		if err != nil {
 			l.Errorf("unable to add repository %s %+v", uri, err)
-		}
-	}
-	if cfg.Conf.Repository != "" {
-		err := config.AddRepo(cfg, cfg.Conf.Repository, "default", l)
-		if err != nil {
-			l.Errorf("unable to add repository %s %+v", cfg.Conf.Repository, err)
 		}
 	}
 	return nil

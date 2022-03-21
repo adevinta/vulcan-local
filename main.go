@@ -60,6 +60,7 @@ func main() {
 	}
 
 	cmdTargets := []*config.Target{}
+	cmdRepositories := []string{}
 
 	var showHelp, showVersion bool
 	var configFile string
@@ -101,7 +102,10 @@ func main() {
 		return nil
 	})
 	flag.StringVar(&cfg.Reporting.Threshold, "s", cfg.Reporting.Threshold, fmt.Sprintf("filter by severity %v", reporting.SeverityNames()))
-	flag.StringVar(&cfg.Conf.Repository, "u", "", fmt.Sprintf("chektypes uri (or %s)", envDefaultChecktypesUri))
+	flag.Func("u", fmt.Sprintf("checktype uris. Can be used multiple times. (Also env %s)", envDefaultChecktypesUri), func(s string) error {
+		cmdRepositories = append(cmdRepositories, s)
+		return nil
+	})
 	flag.StringVar(&cfg.Conf.DockerBin, cfg.Conf.DockerBin, cfg.Conf.DockerBin, "docker binary")
 	flag.StringVar(&cfg.Conf.GitBin, cfg.Conf.GitBin, cfg.Conf.GitBin, "git binary")
 	flag.StringVar(&cfg.Conf.IfName, "ifname", cfg.Conf.IfName, "network interface where agent will be available for the checks")
@@ -136,12 +140,6 @@ func main() {
 		return
 	}
 
-	if cfg.Conf.Repository == "" {
-		if repo := os.Getenv(envDefaultChecktypesUri); repo != "" {
-			cfg.Conf.Repository = repo
-		}
-	}
-
 	if configFile != "" {
 		err = config.ReadConfig(configFile, cfg, log)
 		if err != nil {
@@ -151,6 +149,11 @@ func main() {
 		// Overwrite the yaml config with the command line flags.
 		flag.Parse()
 	}
+
+	if repo := os.Getenv(envDefaultChecktypesUri); repo != "" {
+		cfg.Conf.Repositories = append(cfg.Conf.Repositories, repo)
+	}
+	cfg.Conf.Repositories = append(cfg.Conf.Repositories, cmdRepositories...)
 
 	// Overwrite config targets in case of command line targets
 	if len(cmdTargets) > 0 {

@@ -59,8 +59,7 @@ type Conf struct {
 	GitBin       string                 `yaml:"gitBin"`
 	PullPolicy   agentconfig.PullPolicy `yaml:"pullPolicy"`
 	Vars         map[string]string      `yaml:"vars"`
-	Repositories map[string]string      `yaml:"repositories"`
-	Repository   string                 `yaml:"repository"`
+	Repositories []string               `yaml:"repositories"`
 	Registries   []Registry             `yaml:"registries"`
 	LogLevel     string                 `yaml:"logLevel"`
 	Concurrency  int                    `yaml:"concurrency"`
@@ -170,7 +169,7 @@ func ReadConfig(path string, cfg *Config, l log.Logger) error {
 	return nil
 }
 
-func AddRepo(cfg *Config, uri, alias string, l log.Logger) error {
+func AddRepo(cfg *Config, uri string, l log.Logger) error {
 	var ct []Checktype
 	var err error
 	switch {
@@ -185,9 +184,9 @@ func AddRepo(cfg *Config, uri, alias string, l log.Logger) error {
 		return err
 	}
 	for _, c := range ct {
-		cfg.CheckTypes[ChecktypeRef(fmt.Sprintf("%s/%s", alias, c.Name))] = c
+		cfg.CheckTypes[ChecktypeRef(c.Name)] = c
 	}
-	l.Infof("Loaded checktypes uri=%s alias=%s checktypes=%d", uri, alias, len(ct))
+	l.Infof("Loaded checktypes uri=%s checktypes=%d", uri, len(ct))
 	return nil
 }
 

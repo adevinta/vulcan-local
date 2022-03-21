@@ -11,8 +11,7 @@ conf:
     REGISTRY_PASSWORD: ${REGISTRY_PASSWORD}
 
   repositories:
-    # The checktypes in default can be accessed without prefix (i.e. vulcan-seekret or default/vulcan-seekret)
-    default: file://${TRAVIS_BUILD_DIR:-.}/script/checktypes-stable.json
+    - file://${TRAVIS_BUILD_DIR:-.}/script/checktypes-stable.json
 
   # Registry credentials to pull checks from private registries
   registries:

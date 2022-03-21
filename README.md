@@ -57,8 +57,7 @@ This is a very simple config file with two checks:
 ```yaml
 conf:
   repositories:
-    # A local checktype uri
-    default: file://./script/checktypes-stable.json
+    - file://./script/checktypes-stable.json
 
 # List of targets to scan generating checks from all available checktypes
 targets:
