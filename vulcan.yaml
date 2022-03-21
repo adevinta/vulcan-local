@@ -60,8 +60,8 @@ checks:
 
 reporting:
   format: json
-  # Valid values CRITICAL, *HIGH*, MEDIUM, LOW  (default HIGH)
-  threshold: HIGH
+  # Valid values CRITICAL, *HIGH*, MEDIUM, LOW, INFO (default HIGH)
+  severity: HIGH
   exclusions:
     - summary: Leaked
     - affectedResource: libgcrypt

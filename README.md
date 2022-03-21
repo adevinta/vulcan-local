@@ -111,15 +111,15 @@ Usage of vulcan-local:
   -o value
     	options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
   -pullpolicy value
-    	when to pull for check images [Always IfNotPresent Never]
+    	when to pull for check images [IfNotPresent Never Always]
   -r string
     	results file (i.e. -r results.json)
-  -s string
-    	filter by severity [CRITICAL HIGH MEDIUM LOW ALL]
+  -s value
+    	filter by severity [CRITICAL HIGH MEDIUM LOW INFO] (default HIGH)
   -t value
     	target to scan. Can be used multiple times.
-  -u string
-    	chektypes uri (or VULCAN_CHECKTYPES_URI)
+  -u value
+    	checktype uris. Can be used multiple times. (Also env VULCAN_CHECKTYPES_URI)
   -version
     	print version
 ```

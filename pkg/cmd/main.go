@@ -32,63 +32,43 @@ import (
 
 const defaultDockerHost = "host.docker.internal"
 
-func validateEnum(value string, options []string, defaultValue string) (string, error) {
-	if value == "" {
-		value = defaultValue
-	}
-	for _, o := range options {
-		if strings.EqualFold(value, o) {
-			return o, nil
-		}
-	}
-	return "", fmt.Errorf("invalid value=%v allowed=%v", value, options)
-}
-
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
 
 	log.SetLevel(agentlog.ParseLogLevel(cfg.Conf.LogLevel))
 
-	if cfg.Reporting.Threshold, err = validateEnum(cfg.Reporting.Threshold, reporting.SeverityNames(), "HIGH"); err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("wrong pullPolicy %+v", err)
-	}
-
 	if err = checkDependencies(cfg, log); err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unmet dependencies %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unmet dependencies %+v", err)
 	}
 
 	if cfg.Conf.Include != "" {
 		if cfg.Conf.IncludeR, err = regexp.Compile(cfg.Conf.Include); err != nil {
-			return reporting.ErrorExitCode, fmt.Errorf("invalid include regexp %+v", err)
+			return config.ErrorExitCode, fmt.Errorf("invalid include regexp %+v", err)
 		}
 	}
 	if cfg.Conf.Exclude != "" {
 		if cfg.Conf.ExcludeR, err = regexp.Compile(cfg.Conf.Exclude); err != nil {
-			return reporting.ErrorExitCode, fmt.Errorf("invalid exclude regexp %+v", err)
+			return config.ErrorExitCode, fmt.Errorf("invalid exclude regexp %+v", err)
 		}
-	}
-
-	if _, err := reporting.FindSeverity(cfg.Reporting.Threshold); err != nil {
-		return reporting.ErrorExitCode, err
 	}
 
 	err = generator.ImportRepositories(cfg, log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
 	}
 
 	if err = generator.GenerateChecksFromTargets(cfg, log); err != nil {
-		return reporting.ErrorExitCode, err
+		return config.ErrorExitCode, err
 	}
 
 	agentIp := GetAgentIP(cfg.Conf.IfName, log)
 	if agentIp == "" {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to get the agent ip %s", cfg.Conf.IfName)
+		return config.ErrorExitCode, fmt.Errorf("unable to get the agent ip %s", cfg.Conf.IfName)
 	}
 
 	hostIp := GetHostIP(log)
 	if hostIp == "" {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to infer host ip")
+		return config.ErrorExitCode, fmt.Errorf("unable to infer host ip")
 	}
 
 	gs := gitservice.New(log)
@@ -96,12 +76,12 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 
 	jobs, err := generator.GenerateJobs(cfg, agentIp, hostIp, gs, log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
 	}
 
 	if len(jobs) == 0 {
 		log.Infof("Empty list of checks")
-		return reporting.SuccessExitCode, nil
+		return config.SuccessExitCode, nil
 	}
 
 	// AWS Credentials are required for sqs
@@ -111,24 +91,24 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 
 	sqs, err := sqsservice.Start(log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to parse start sqs server %w", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to parse start sqs server %w", err)
 	}
 	defer sqs.Shutdown()
 
 	results, err := results.Start(log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to start results server %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to start results server %+v", err)
 	}
 	defer results.Shutdown()
 
 	err = generator.SendJobs(jobs, sqs.ArnChecks, sqs.Endpoint, log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to send jobs to queue %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to send jobs to queue %+v", err)
 	}
 
 	apiPort, err := freeport.GetFreePort()
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("unable to find a port for agent api %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to find a port for agent api %+v", err)
 	}
 	log.Debugf("Setting agent server on http://%s:%d/", agentIp, apiPort)
 
@@ -189,7 +169,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 	backend, err := docker.NewBackend(log, agentConfig, nil)
 	if err != nil {
-		return reporting.ErrorExitCode, err
+		return config.ErrorExitCode, err
 	}
 
 	// Show progress to prevent CI/CD complaining of no output for long time
@@ -214,7 +194,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 	exit := agent.Run(agentConfig, backend, logAgent.WithField("comp", "agent"))
 	if exit != 0 {
-		return reporting.ErrorExitCode, fmt.Errorf("error running the agent exit=%d", exit)
+		return config.ErrorExitCode, fmt.Errorf("error running the agent exit=%d", exit)
 	}
 
 	quitProgress <- true
@@ -224,7 +204,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 
 	reportCode, err := reporting.Generate(cfg, results, log)
 	if err != nil {
-		return reporting.ErrorExitCode, fmt.Errorf("error generating report %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("error generating report %+v", err)
 	}
 
 	return reportCode, nil

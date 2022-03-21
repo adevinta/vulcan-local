@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-local/pkg/config"
 	report "github.com/adevinta/vulcan-report"
 )
 
@@ -25,7 +26,7 @@ const (
 type ExtendedVulnerability struct {
 	*report.CheckData
 	*report.Vulnerability
-	Severity *Severity
+	Severity *config.SeverityData
 	Excluded bool
 }
 
@@ -34,23 +35,24 @@ func summaryTable(s []ExtendedVulnerability, l log.Logger) {
 		l.Infof("No vulnerabilities found during the last scan")
 		return
 	}
-	data := make(map[string]int)
+	data := make(map[config.Severity]int)
 	excluded := 0
 	for _, v := range s {
 		if v.Excluded {
 			excluded++
 		} else {
-			data[FindSeverityByScore(v.Score).Name]++
+			data[config.FindSeverityByScore(v.Score)]++
 		}
 	}
 	buf := new(bytes.Buffer)
 	fmt.Fprint(buf, "\nSummary of the last scan:\n")
-	for _, d := range severities {
+	for _, s := range config.Severities() {
+		d := s.Data()
 		color := 0
-		if data[d.Name] != 0 {
+		if data[s] != 0 {
 			color = d.Color
 		}
-		fmt.Fprintf(buf, "%s%s%s%4d\n", indentate(baseIndent), formatString(d.Name, color), strings.Repeat("·", SummaryWidth-len(d.Name)), data[d.Name])
+		fmt.Fprintf(buf, "%s%s%s%4d\n", indentate(baseIndent), formatString(d.Name, color), strings.Repeat("·", SummaryWidth-len(d.Name)), data[s])
 	}
 	if excluded > 0 {
 		fmt.Fprintf(buf, "\nNumber of excluded vulnerabilities: %d\n", excluded)

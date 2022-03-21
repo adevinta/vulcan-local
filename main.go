@@ -16,7 +16,6 @@ import (
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-local/pkg/cmd"
 	"github.com/adevinta/vulcan-local/pkg/config"
-	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,7 +52,8 @@ func main() {
 			Vars:        map[string]string{},
 		},
 		Reporting: config.Reporting{
-			Format: "json",
+			Format:   "json",
+			Severity: config.SeverityHigh,
 		},
 		CheckTypes: map[config.ChecktypeRef]config.Checktype{},
 		Checks:     []config.Check{},
@@ -101,7 +101,9 @@ func main() {
 		}
 		return nil
 	})
-	flag.StringVar(&cfg.Reporting.Threshold, "s", cfg.Reporting.Threshold, fmt.Sprintf("filter by severity %v", reporting.SeverityNames()))
+	flag.Func("s", fmt.Sprintf("filter by severity %v (default %s)", config.SeverityNames(), cfg.Reporting.Severity.Data().Name), func(s string) error {
+		return cfg.Reporting.Severity.UnmarshalText([]byte(s))
+	})
 	flag.Func("u", fmt.Sprintf("checktype uris. Can be used multiple times. (Also env %s)", envDefaultChecktypesUri), func(s string) error {
 		cmdRepositories = append(cmdRepositories, s)
 		return nil
