@@ -43,7 +43,7 @@ checks:
   - type: vulcan-seekret
     target: https://github.com/${TRAVIS_REPO_SLUG}.git
     options:
-      branch: ${TRAVIS_COMMIT}
+      branch: ${TRAVIS_BRANCH}
 
   # Check with default options
   # - type: vulcan-zap
