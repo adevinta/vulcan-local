@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-check-sdk/helpers"
 	"github.com/jesusfcr/gittp"
 	"github.com/phayes/freeport"
 )
@@ -68,6 +69,12 @@ func (gs *gitService) AddGit(path string) (int, error) {
 		r.server.ListenAndServe()
 		defer gs.wg.Done()
 	}()
+
+	url := fmt.Sprintf("http://localhost:%d", port)
+	if !helpers.IsGitRepoReachable(url, "", "") {
+		gs.log.Errorf("The git service %s from %s will be flagged as unreachable", url, path)
+	}
+
 	return port, nil
 }
 
