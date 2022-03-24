@@ -20,6 +20,7 @@ import (
 )
 
 const envDefaultChecktypesUri = "VULCAN_CHECKTYPES_URI"
+const envDefaultVulcanLocalUri = "VULCAN_LOCAL_CONFIG"
 
 var (
 	version = "dev"
@@ -61,12 +62,15 @@ func main() {
 
 	cmdTargets := []*config.Target{}
 	cmdRepositories := []string{}
+	cmdConfigs := []string{}
 
 	var showHelp, showVersion bool
-	var configFile string
 	flag.BoolVar(&showHelp, "h", false, "print usage")
 	flag.BoolVar(&showVersion, "version", false, "print version")
-	flag.StringVar(&configFile, "c", "", "config file (i.e. -c vulcan.yaml)")
+	flag.Func("c", fmt.Sprintf("config file (i.e. -c vulcan.yaml). (Also env %s)", envDefaultVulcanLocalUri), func(s string) error {
+		cmdConfigs = append(cmdConfigs, s)
+		return nil
+	})
 	flag.StringVar(&cfg.Conf.LogLevel, "l", cfg.Conf.LogLevel, "log level [panic, fatal, error, warn, info, debug]")
 	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (i.e. -r results.json)")
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
@@ -142,17 +146,24 @@ func main() {
 		return
 	}
 
-	if configFile != "" {
-		err = config.ReadConfig(configFile, cfg, log)
-		if err != nil {
-			log.Errorf("Unable to parse config file %s %+v", configFile, err)
-			return
+	if env := os.Getenv(envDefaultVulcanLocalUri); env != "" {
+		log.Debugf("Adding config from %s uri=%s", envDefaultVulcanLocalUri, env)
+		cmdConfigs = append(cmdConfigs, env)
+	}
+	if len(cmdConfigs) > 0 {
+		for _, uri := range cmdConfigs {
+			err = config.ReadConfig(uri, cfg, log)
+			if err != nil {
+				log.Errorf("Unable to parse config file %s %+v", uri, err)
+				return
+			}
 		}
 		// Overwrite the yaml config with the command line flags.
 		flag.Parse()
 	}
 
 	if repo := os.Getenv(envDefaultChecktypesUri); repo != "" {
+		log.Debugf("Adding config from %s uri=%s", envDefaultChecktypesUri, repo)
 		cfg.Conf.Repositories = append(cfg.Conf.Repositories, repo)
 	}
 	cfg.Conf.Repositories = append(cfg.Conf.Repositories, cmdRepositories...)

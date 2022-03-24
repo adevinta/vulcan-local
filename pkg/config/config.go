@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/drone/envsubst"
+	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v3"
 )
 
@@ -261,16 +263,33 @@ func ReadConfig(uri string, cfg *Config, l log.Logger) error {
 
 	c, err := envsubst.EvalEnv(string(bytes))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to eval envs in %s: %w", uri, err)
 	}
 	bytes = []byte(c)
-	err = yaml.Unmarshal(bytes, cfg)
+	newConfig := Config{}
+	err = yaml.Unmarshal(bytes, &newConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to decode yaml %s: %w", uri, err)
 	}
 
-	if (*cfg).CheckTypes == nil {
-		(*cfg).CheckTypes = make(map[ChecktypeRef]Checktype)
+	if err = mergo.Merge(cfg, newConfig, mergo.WithTransformers(sliceAppenderTransformer{})); err != nil {
+		return fmt.Errorf("unable to merge config %s: %w", uri, err)
+	}
+	l.Infof("Loaded config from uri=%s", uri)
+	return nil
+}
+
+type sliceAppenderTransformer struct {
+}
+
+func (t sliceAppenderTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ.Kind() == reflect.Slice {
+		return func(dst, src reflect.Value) error {
+			if dst.CanSet() {
+				dst.Set(reflect.AppendSlice(dst, src))
+			}
+			return nil
+		}
 	}
 	return nil
 }
