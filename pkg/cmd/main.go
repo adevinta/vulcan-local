@@ -35,26 +35,26 @@ const defaultDockerHost = "host.docker.internal"
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
 
-	log.SetLevel(agentlog.ParseLogLevel(cfg.Conf.LogLevel))
+	log.SetLevel(agentlog.ParseLogLevel(cfg.Conf.LogLevel.String()))
 
 	if err = checkDependencies(cfg, log); err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unmet dependencies %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unmet dependencies: %w", err)
 	}
 
 	if cfg.Conf.Include != "" {
 		if cfg.Conf.IncludeR, err = regexp.Compile(cfg.Conf.Include); err != nil {
-			return config.ErrorExitCode, fmt.Errorf("invalid include regexp %+v", err)
+			return config.ErrorExitCode, fmt.Errorf("invalid include regexp: %w", err)
 		}
 	}
 	if cfg.Conf.Exclude != "" {
 		if cfg.Conf.ExcludeR, err = regexp.Compile(cfg.Conf.Exclude); err != nil {
-			return config.ErrorExitCode, fmt.Errorf("invalid exclude regexp %+v", err)
+			return config.ErrorExitCode, fmt.Errorf("invalid exclude regexp: %w", err)
 		}
 	}
 
 	err = generator.ImportRepositories(cfg, log)
 	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to generate checks: %w", err)
 	}
 
 	if err = generator.GenerateChecksFromTargets(cfg, log); err != nil {
@@ -119,7 +119,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	auths := []agentconfig.Auth{}
 	for _, r := range cfg.Conf.Registries {
 		if r.Server == "" || r.Username == "" || r.Password == "" {
-			log.Infof("Skipping empty registry")
+			log.Debugf("Skipping empty registry")
 			continue
 		}
 		auths = append(auths, agentconfig.Auth{
