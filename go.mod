@@ -10,6 +10,7 @@ require (
 	github.com/adevinta/vulcan-types v0.0.0-20220310133120-53f000e5196f
 	github.com/drone/envsubst v1.0.3
 	github.com/google/uuid v1.3.0
+	github.com/imdario/mergo v0.3.12
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/p4tin/goaws v1.1.2
