@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -220,55 +219,42 @@ func FindSeverityByScore(score float32) Severity {
 	return severities[len(severities)-1].Severity
 }
 
-func GetManifestFromUrl(url string) ([]Checktype, error) {
-	client := http.Client{
-		Timeout: time.Second * 10,
+func getUriContent(uri string) ([]byte, error) {
+	if uri == "" {
+		return nil, fmt.Errorf("empty uri")
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	ct := Manifest{}
-	err = json.Unmarshal(body, &ct)
-	if err != nil {
-		return nil, err
+	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
+		client := http.Client{
+			Timeout: time.Second * 10,
+		}
+		req, err := http.NewRequest(http.MethodGet, uri, nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to request uri %s: %w", uri, err)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get uri %s: %w", uri, err)
+		}
+		if res.Body != nil {
+			defer res.Body.Close()
+		}
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read uri %s: %w", uri, err)
+		}
+		return body, nil
 	}
 
-	return ct.CheckTypes, nil
+	uri = strings.TrimPrefix(uri, "file://")
+	body, err := ioutil.ReadFile(uri)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file %s: %w", uri, err)
+	}
+	return body, nil
 }
 
-func GetManifestFromFile(path string) ([]Checktype, error) {
-	body, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	ct := Manifest{}
-	err = json.Unmarshal(body, &ct)
-	if err != nil {
-		return nil, err
-	}
-	return ct.CheckTypes, nil
-}
-
-func ReadConfig(path string, cfg *Config, l log.Logger) error {
-	var bytes []byte
-	var err error
-	if path == "-" {
-		bytes, err = ioutil.ReadAll(os.Stdin)
-	} else {
-		bytes, err = ioutil.ReadFile(path)
-	}
+func ReadConfig(uri string, cfg *Config, l log.Logger) error {
+	bytes, err := getUriContent(uri)
 	if err != nil {
 		return err
 	}
@@ -290,23 +276,20 @@ func ReadConfig(path string, cfg *Config, l log.Logger) error {
 }
 
 func AddRepo(cfg *Config, uri string, l log.Logger) error {
-	var ct []Checktype
-	var err error
-	switch {
-	case strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://"):
-		ct, err = GetManifestFromUrl(uri)
-	case strings.HasPrefix(uri, "file://"):
-		ct, err = GetManifestFromFile(strings.TrimPrefix(uri, "file://"))
-	default:
-		err = fmt.Errorf("invalid repository uri")
-	}
+	content, err := getUriContent(uri)
 	if err != nil {
 		return err
 	}
-	for _, c := range ct {
+	man := Manifest{}
+	err = json.Unmarshal(content, &man)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range man.CheckTypes {
 		cfg.CheckTypes[ChecktypeRef(c.Name)] = c
 	}
-	l.Infof("Loaded checktypes uri=%s checktypes=%d", uri, len(ct))
+	l.Infof("Loaded checktypes uri=%s checktypes=%d", uri, len(man.CheckTypes))
 	return nil
 }
 
