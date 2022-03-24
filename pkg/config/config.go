@@ -340,20 +340,10 @@ func CheckPolicies(cfg *Config, l log.Logger) error {
 	}
 	for _, p := range cfg.Policies {
 		if p.Name == cfg.Conf.Policy {
-			l.Infof("applying policy %s", p.Name)
-			for _, pc := range p.Checks {
-				e := false
-				for _, c := range cfg.Checks {
-					if pc.Checktype == c.Checktype {
-						e = true
-					}
-				}
-				if !e {
-					cfg.Checks = append(cfg.Checks, pc)
-				}
-			}
+			l.Infof("Applying policy %s", p.Name)
+			cfg.Checks = []Check{}
 			return nil
 		}
 	}
-	return fmt.Errorf("policy %s does not exist, exiting", cfg.Conf.Policy)
+	return fmt.Errorf("Policy %s does not exist, exiting", cfg.Conf.Policy)
 }
