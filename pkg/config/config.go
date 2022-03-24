@@ -18,6 +18,7 @@ import (
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/drone/envsubst"
 	"github.com/imdario/mergo"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -62,7 +63,7 @@ type Conf struct {
 	Vars         map[string]string      `yaml:"vars"`
 	Repositories []string               `yaml:"repositories"`
 	Registries   []Registry             `yaml:"registries"`
-	LogLevel     string                 `yaml:"logLevel"`
+	LogLevel     logrus.Level           `yaml:"logLevel"`
 	Concurrency  int                    `yaml:"concurrency"`
 	IfName       string                 `yaml:"ifName"`
 	Exclude      string                 `yaml:"exclude"`

@@ -47,7 +47,7 @@ func main() {
 		Conf: config.Conf{
 			DockerBin:   "docker",
 			GitBin:      "git",
-			LogLevel:    "info",
+			LogLevel:    logrus.InfoLevel,
 			Concurrency: 3,
 			IfName:      "docker0",
 			Vars:        map[string]string{},
@@ -71,7 +71,9 @@ func main() {
 		cmdConfigs = append(cmdConfigs, s)
 		return nil
 	})
-	flag.StringVar(&cfg.Conf.LogLevel, "l", cfg.Conf.LogLevel, "log level [panic, fatal, error, warn, info, debug]")
+	flag.Func("l", fmt.Sprintf("log level %v (default %s)", logrus.AllLevels, cfg.Conf.LogLevel.String()), func(s string) error {
+		return cfg.Conf.LogLevel.UnmarshalText([]byte(s))
+	})
 	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (i.e. -r results.json)")
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
 	flag.StringVar(&cfg.Conf.Exclude, "e", cfg.Conf.Exclude, "exclude checktype regex")
@@ -120,6 +122,8 @@ func main() {
 		return cfg.Conf.PullPolicy.UnmarshalText([]byte(s))
 	})
 	flag.Parse()
+
+	log.SetLevel(cfg.Conf.LogLevel)
 
 	if showHelp {
 		flag.Usage()
