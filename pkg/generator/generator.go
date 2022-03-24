@@ -343,7 +343,7 @@ func filterChecktype(name string, include, exclude *regexp.Regexp, policy config
 	}
 	if len(policy.Checks) > 0 {
 		for _, p := range policy.Checks {
-			if name == string(p.Type) {
+			if name == string(p.Checktype) {
 				return true
 			}
 		}
