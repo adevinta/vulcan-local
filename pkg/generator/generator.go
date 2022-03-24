@@ -62,6 +62,8 @@ func buildOptions(checktypeOpts, targetOpts map[string]interface{}) (string, err
 }
 
 func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitService, l log.Logger) ([]jobrunner.Job, error) {
+	unique := map[string]*config.Check{}
+
 	jobs := []jobrunner.Job{}
 	for i := range cfg.Checks {
 		// Because We want to update the original Check
@@ -82,6 +84,7 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			l.Errorf("Skipping check - %s", err)
 			continue
 		}
+
 		c.Id = uuid.New().String()
 		c.NewTarget = c.Target
 		if stringInSlice("GitRepository", ch.Assets) {
@@ -101,6 +104,13 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 		// We allow all the checks to scan local assets.
 		// This could be tunned depending on the target/assettype
 		vars := append(ch.RequiredVars, "VULCAN_ALLOW_PRIVATE_IPS")
+
+		fingerprint := ComputeFingerprint(ch.Image, c.Target, c.AssetType, ops)
+		if dup, ok := unique[fingerprint]; ok {
+			l.Debugf("Filtering duplicated check name=%s image=%s target=%s id=%s id=%s", ch.Name, ch.Image, c.Target, c.Id, dup.Id)
+			continue
+		}
+		unique[fingerprint] = c
 
 		l.Infof("Check name=%s image=%s target=%s new=%s type=%s id=%s", ch.Name, ch.Image, c.Target, c.NewTarget, c.AssetType, c.Id)
 
