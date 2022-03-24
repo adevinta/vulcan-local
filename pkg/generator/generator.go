@@ -302,8 +302,8 @@ func AddAssetChecks(cfg *config.Config, a config.Target, l log.Logger) error {
 		}
 		if stringInSlice(a.AssetType, ch.Assets) && filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR, policy) {
 			for _, c := range policy.Checks {
-				if ch.Name == string(c.Type) {
-					a.Options = mergeOptions(a.Options, c.Options)
+				if ch.Name == string(c.Checktype) {
+					a.Options = mergeOptions(c.Options, a.Options)
 				}
 			}
 			checks = append(checks, config.Check{
