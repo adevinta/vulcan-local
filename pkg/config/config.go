@@ -37,9 +37,9 @@ type Check struct {
 }
 
 type Target struct {
-	Target    string
-	AssetType string
-	Options   map[string]interface{}
+	Target    string                 `yaml:"target"`
+	AssetType string                 `yaml:"assetType"`
+	Options   map[string]interface{} `yaml:"options,omitempty"`
 }
 
 type Config struct {
@@ -58,7 +58,7 @@ type Policy struct {
 
 type PolicyCheck struct {
 	CheckType ChecktypeRef           `yaml:"type"`
-	Options   map[string]interface{} `yaml:"options"`
+	Options   map[string]interface{} `yaml:"options,omitempty"`
 }
 
 type Registry struct {

@@ -46,6 +46,9 @@ func mergeOptions(optsA map[string]interface{}, optsB map[string]interface{}) ma
 
 // buildOptions generates a string encoded
 func buildOptions(options map[string]interface{}) (string, error) {
+	if options == nil {
+		return "{}", nil
+	}
 	content, err := json.Marshal(options)
 	if err != nil {
 		return "", err
