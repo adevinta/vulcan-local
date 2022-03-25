@@ -34,7 +34,7 @@ policies:
           max_scan_duration: 3
       - type: vulcan-trivy
 
-  - name: fast-scan
+  - name: lightweight
     checks:
       - type: vulcan-seekret
       - type: vulcan-zap
@@ -55,6 +55,8 @@ targets:
       max_scan_duration: 1
 
   - target: ${TRAVIS_BUILD_DIR:-.}
+
+  - target: registry.hub.docker.com/appsecco/dsvw:latest
 
 checks:
 
