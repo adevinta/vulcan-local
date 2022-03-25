@@ -333,17 +333,3 @@ func GetCheckById(cfg *Config, id string) *Check {
 	}
 	return nil
 }
-
-func CheckPolicies(cfg *Config, l log.Logger) error {
-	if cfg.Conf.Policy == "" {
-		return nil
-	}
-	for _, p := range cfg.Policies {
-		if p.Name == cfg.Conf.Policy {
-			l.Infof("Applying policy %s", p.Name)
-			cfg.Checks = []Check{}
-			return nil
-		}
-	}
-	return fmt.Errorf("Policy %s does not exist, exiting", cfg.Conf.Policy)
-}

@@ -52,17 +52,16 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		}
 	}
 
-	err = config.CheckPolicies(cfg, log)
-	if err != nil {
-		return config.ErrorExitCode, err
-	}
-
 	err = generator.ImportRepositories(cfg, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to generate checks: %w", err)
 	}
 
-	if err = generator.GenerateChecksFromTargets(cfg, log); err != nil {
+	if err = generator.ComputeTargets(cfg, log); err != nil {
+		return config.ErrorExitCode, err
+	}
+
+	if err = generator.AddAssetChecks(cfg, log); err != nil {
 		return config.ErrorExitCode, err
 	}
 
