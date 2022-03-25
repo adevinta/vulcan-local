@@ -52,12 +52,12 @@ type Config struct {
 }
 
 type Policy struct {
-	Name   string        `yaml:"name"`
-	Checks []PolicyCheck `yaml:"checks"`
+	Name       string        `yaml:"name"`
+	CheckTypes []PolicyCheck `yaml:"checks"`
 }
 
 type PolicyCheck struct {
-	Checktype ChecktypeRef           `yaml:"type"`
+	CheckType ChecktypeRef           `yaml:"type"`
 	Options   map[string]interface{} `yaml:"options"`
 }
 
