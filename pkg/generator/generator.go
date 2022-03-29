@@ -287,20 +287,6 @@ func ComputeFingerprint(args ...interface{}) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func AddAssetChecks(cfg *config.Config, l log.Logger) error {
-	if cfg.Conf.Policy != "" {
-		cfg.Checks = []config.Check{} // Remove existing checks before applying the policy.
-		if err := AddPolicyChecks(cfg, l); err != nil {
-			return err
-		}
-	} else {
-		if err := AddAllChecks(cfg, l); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // This function is called if a policy has been set, and creates a list of checks to run based on targets
 // and policy.
 func AddPolicyChecks(cfg *config.Config, l log.Logger) error {
