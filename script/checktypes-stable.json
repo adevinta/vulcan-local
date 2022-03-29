@@ -35,16 +35,36 @@
             ]
         },
         {
-            "name": "vulcan-trivy",
+            "name": "vulcan-trivy-image",
             "description": "Scan docker images using aquasec/trivy",
-            "image": "vulcansec/vulcan-trivy:latest",
+            "image": "vulcan-trivy-experimental:latest",
             "required_vars": [
                 "REGISTRY_DOMAIN",
                 "REGISTRY_USERNAME",
                 "REGISTRY_PASSWORD"
             ],
+            "options": {
+                "branch": "",
+                "depth": 1
+            },
             "assets": [
                 "DockerImage"
+            ]
+        },
+        {
+            "name": "vulcan-trivy-repo",
+            "description": "Scan docker images using aquasec/trivy",
+            "image": "vulcan-trivy-repo-experimental:latest",
+            "required_vars": [
+                "GITHUB_ENTERPRISE_ENDPOINT",
+                "GITHUB_ENTERPRISE_TOKEN"
+            ],
+            "options": {
+                "branch": "",
+                "depth": 1
+            },
+            "assets": [
+                "GitRepository"
             ]
         },
         {

@@ -91,8 +91,8 @@ Usage:
 Usage of vulcan-local:
   -a value
     	asset type of the last target (-t)
-  -c string
-    	config file (i.e. -c vulcan.yaml)
+  -c value
+    	config file (i.e. -c vulcan.yaml). Can be used multiple times. (Also env VULCAN_LOCAL_CONFIG)
   -concurrency int
     	max number of checks/containers to run concurrently (default 3)
   -docker string
@@ -106,12 +106,12 @@ Usage of vulcan-local:
     	include checktype regex
   -ifname string
     	network interface where agent will be available for the checks (default "docker0")
-  -l string
-    	log level [panic, fatal, error, warn, info, debug] (default "info")
+  -l value
+    	log level [panic fatal error warning info debug trace] (default info)
   -o value
     	options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
   -pullpolicy value
-    	when to pull for check images [IfNotPresent Never Always]
+    	when to pull for check images [Always IfNotPresent Never]
   -r string
     	results file (i.e. -r results.json)
   -s value

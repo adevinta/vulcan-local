@@ -67,7 +67,7 @@ func main() {
 	var showHelp, showVersion bool
 	flag.BoolVar(&showHelp, "h", false, "print usage")
 	flag.BoolVar(&showVersion, "version", false, "print version")
-	flag.Func("c", fmt.Sprintf("config file (i.e. -c vulcan.yaml). (Also env %s)", envDefaultVulcanLocalUri), func(s string) error {
+	flag.Func("c", fmt.Sprintf("config file (i.e. -c vulcan.yaml). Can be used multiple times. (Also env %s)", envDefaultVulcanLocalUri), func(s string) error {
 		cmdConfigs = append(cmdConfigs, s)
 		return nil
 	})
