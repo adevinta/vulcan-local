@@ -328,7 +328,7 @@ func AddAllChecks(cfg *config.Config, l log.Logger) error {
 	for _, t := range cfg.Targets {
 		for ref, c := range cfg.CheckTypes {
 			if stringInSlice(t.AssetType, c.Assets) {
-				options := mergeOptions(c.Options, t.Options) // Merge check options with target options.
+				options := mergeOptions(c.Options, t.Options) // Merge checktype options with target options.
 				checks = append(checks, config.Check{
 					Type:      ref,
 					Target:    t.Target,
@@ -337,6 +337,14 @@ func AddAllChecks(cfg *config.Config, l log.Logger) error {
 				})
 			}
 		}
+	}
+	for _, c := range cfg.Checks {
+		ct, ok := cfg.CheckTypes[c.Type]
+		if !ok {
+			l.Errorf("Check %s under 'checks' section not found", c.Checktype.Name)
+			continue
+		}
+		c.Options = mergeOptions(c.Options, ct.Options) // Merge check options with checktype options.
 	}
 	cfg.Checks = append(cfg.Checks, checks...)
 	return nil
