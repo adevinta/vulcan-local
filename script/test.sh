@@ -11,7 +11,7 @@ docker run -p 1234:8000 --restart unless-stopped --name dsvw -d appsecco/dsvw
 sleep 5
 
 echo "Test based on yaml config using lightweight policy"
-./vulcan-local -c ./vulcan.yaml -c ./script/policies.yaml -p lightweight
+./vulcan-local -c ./vulcan.yaml -c ./script/vulcan-policies.yaml -p lightweight
 echo "exit=$?"
 
 echo "Test local path as a git repository excluding the github check"
