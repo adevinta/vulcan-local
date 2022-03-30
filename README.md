@@ -110,6 +110,8 @@ Usage of vulcan-local:
     	log level [panic fatal error warning info debug trace] (default info)
   -o value
     	options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
+  -p string
+      policy to be applied to configure the checks and options to be run
   -pullpolicy value
     	when to pull for check images [Always IfNotPresent Never]
   -r string
@@ -169,7 +171,24 @@ vulcan-local -t . -a GitRepository
 
 # Execute all checks . inferring the asset type
 vulcan-local -t .
+
 ```
+
+### Policies
+
+Policies for vulcan-local are intended to abstract the overhead selecting the checks and options to scan any valid target.
+
+A local or remote file can be configured to load policies, and then the policy to apply can be set using the parameter `-p`, for example:
+
+```sh
+# Configuration file set through an env variable
+export VULCAN_LOCAL_CONFIG=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml
+
+# Run vulcan-local with the lightweight policy
+vulcan-local -c vulcan.yaml -p lightweight
+```
+
+_This feature is under development, and existing policies were created just for testing purposes._
 
 ### Exclusions
 

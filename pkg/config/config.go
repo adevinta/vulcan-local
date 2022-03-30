@@ -37,9 +37,9 @@ type Check struct {
 }
 
 type Target struct {
-	Target    string
-	AssetType string
-	Options   map[string]interface{}
+	Target    string                 `yaml:"target"`
+	AssetType string                 `yaml:"assetType"`
+	Options   map[string]interface{} `yaml:"options,omitempty"`
 }
 
 type Config struct {
@@ -48,6 +48,17 @@ type Config struct {
 	Checks     []Check                    `yaml:"checks"`
 	Targets    []Target                   `yaml:"targets"`
 	CheckTypes map[ChecktypeRef]Checktype `yaml:"checkTypes"`
+	Policies   []Policy                   `yaml:"policies"`
+}
+
+type Policy struct {
+	Name       string        `yaml:"name"`
+	CheckTypes []PolicyCheck `yaml:"checks"`
+}
+
+type PolicyCheck struct {
+	CheckType ChecktypeRef           `yaml:"type"`
+	Options   map[string]interface{} `yaml:"options,omitempty"`
 }
 
 type Registry struct {
@@ -70,6 +81,7 @@ type Conf struct {
 	Include      string                 `yaml:"include"`
 	IncludeR     *regexp.Regexp
 	ExcludeR     *regexp.Regexp
+	Policy       string
 }
 
 type Exclusion struct {

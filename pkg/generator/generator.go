@@ -44,17 +44,12 @@ func mergeOptions(optsA map[string]interface{}, optsB map[string]interface{}) ma
 	return merged
 }
 
-// buildOptions generates a string encoded Now it makes the union of both options with precedence of the targetOpts.
-// TODO: Decide if it makes sense to intersect, discarding the target options not defined in the checktypeOpts.
-func buildOptions(checktypeOpts, targetOpts map[string]interface{}) (string, error) {
-	totalOptions := map[string]interface{}{}
-	if len(checktypeOpts) > 0 {
-		totalOptions = checktypeOpts
+// buildOptions generates a string encoded
+func buildOptions(options map[string]interface{}) (string, error) {
+	if options == nil {
+		return "{}", nil
 	}
-	if len(targetOpts) > 0 {
-		totalOptions = mergeOptions(totalOptions, targetOpts)
-	}
-	content, err := json.Marshal(totalOptions)
+	content, err := json.Marshal(options)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +74,7 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			continue
 		}
 
-		ops, err := buildOptions(ch.Options, c.Options)
+		ops, err := buildOptions(c.Options)
 		if err != nil {
 			l.Errorf("Skipping check - %s", err)
 			continue
@@ -246,7 +241,7 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 
 // GenerateChecksFromTargets expands the list of targets by inferring missing AssetTypes
 // and generates the list of checks to run based on the available Checktypes and AssetType.
-func GenerateChecksFromTargets(cfg *config.Config, l log.Logger) error {
+func ComputeTargets(cfg *config.Config, l log.Logger) error {
 	// Generate a new list of Targets with AssetType
 	expandedTargets := []config.Target{}
 	for _, t := range cfg.Targets {
@@ -276,7 +271,6 @@ func GenerateChecksFromTargets(cfg *config.Config, l log.Logger) error {
 		} else {
 			dedupTargets = append(dedupTargets, a)
 			uniq[f] = nil
-			AddAssetChecks(cfg, a, l)
 		}
 	}
 	cfg.Targets = dedupTargets
@@ -293,17 +287,64 @@ func ComputeFingerprint(args ...interface{}) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func AddAssetChecks(cfg *config.Config, a config.Target, l log.Logger) error {
-	checks := []config.Check{}
-	for ref, ch := range cfg.CheckTypes {
-		if stringInSlice(a.AssetType, ch.Assets) && filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
-			checks = append(checks, config.Check{
-				Type:      ref,
-				Target:    a.Target,
-				AssetType: a.AssetType,
-				Options:   a.Options,
-			})
+// This function is called if a policy has been set, and creates a list of checks to run based on targets
+// and policy.
+func AddPolicyChecks(cfg *config.Config, l log.Logger) error {
+	policy, err := GetPolicy(cfg)
+	if err != nil {
+		return err
+	}
+	l.Infof("Applying policy %s", policy.Name)
+	checks := []config.Check{} // Ignore the checks in the configuration file when applying a policy.
+	for _, t := range cfg.Targets {
+		for _, pct := range policy.CheckTypes {
+			// Identify CheckType referenced by policy in CheckTypes definition, log error if it doesn't exist
+			// and continue.
+			c, ok := cfg.CheckTypes[pct.CheckType]
+			if !ok {
+				l.Errorf("Check %s from policy %s not found", pct.CheckType, policy.Name)
+				continue
+			}
+			if stringInSlice(t.AssetType, c.Assets) {
+				options := mergeOptions(c.Options, pct.Options) // Merge check options with policy options.
+				options = mergeOptions(options, t.Options)      // Merge options with target options.
+				checks = append(checks, config.Check{
+					Type:      pct.CheckType,
+					Target:    t.Target,
+					AssetType: t.AssetType,
+					Options:   options,
+				})
+			}
 		}
+	}
+	cfg.Checks = append(cfg.Checks, checks...)
+	return nil
+}
+
+// This function is called if no policy has been set, and creates a list of checks to run based on targets and
+// available checks.
+func AddAllChecks(cfg *config.Config, l log.Logger) error {
+	checks := []config.Check{}
+	for _, t := range cfg.Targets {
+		for ref, c := range cfg.CheckTypes {
+			if stringInSlice(t.AssetType, c.Assets) {
+				options := mergeOptions(c.Options, t.Options) // Merge checktype options with target options.
+				checks = append(checks, config.Check{
+					Type:      ref,
+					Target:    t.Target,
+					AssetType: t.AssetType,
+					Options:   options,
+				})
+			}
+		}
+	}
+	for _, c := range cfg.Checks {
+		ct, ok := cfg.CheckTypes[c.Type]
+		if !ok {
+			l.Errorf("Check %s under 'checks' section not found", c.Checktype.Name)
+			continue
+		}
+		c.Options = mergeOptions(c.Options, ct.Options) // Merge check options with checktype options.
 	}
 	cfg.Checks = append(cfg.Checks, checks...)
 	return nil
@@ -370,4 +411,13 @@ func GetValidDirectory(path string) (string, error) {
 		return "", fmt.Errorf("not a directory %s", path)
 	}
 	return path, nil
+}
+
+func GetPolicy(cfg *config.Config) (config.Policy, error) {
+	for _, p := range cfg.Policies {
+		if p.Name == cfg.Conf.Policy {
+			return p, nil
+		}
+	}
+	return config.Policy{}, fmt.Errorf("Policy %s not found", cfg.Conf.Policy)
 }

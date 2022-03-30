@@ -57,8 +57,21 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		return config.ErrorExitCode, fmt.Errorf("unable to generate checks: %w", err)
 	}
 
-	if err = generator.GenerateChecksFromTargets(cfg, log); err != nil {
+	if err = generator.ComputeTargets(cfg, log); err != nil {
 		return config.ErrorExitCode, err
+	}
+
+	// If a policy is set, apply it on all the targets and ignore the checks set before, otherwise
+	// run all available checks against all the targets.
+	if cfg.Conf.Policy != "" {
+		cfg.Checks = []config.Check{} // Remove existing checks before applying the policy.
+		if err := generator.AddPolicyChecks(cfg, log); err != nil {
+			return config.ErrorExitCode, err
+		}
+	} else {
+		if err := generator.AddAllChecks(cfg, log); err != nil {
+			return config.ErrorExitCode, err
+		}
 	}
 
 	agentIp := GetAgentIP(cfg.Conf.IfName, log)

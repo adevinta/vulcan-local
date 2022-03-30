@@ -33,6 +33,8 @@ targets:
 
   - target: ${TRAVIS_BUILD_DIR:-.}
 
+  - target: registry.hub.docker.com/appsecco/dsvw:latest
+
 checks:
 
   # Check current path
