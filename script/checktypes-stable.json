@@ -35,36 +35,16 @@
             ]
         },
         {
-            "name": "vulcan-trivy-image",
+            "name": "vulcan-trivy",
             "description": "Scan docker images using aquasec/trivy",
-            "image": "vulcan-trivy-experimental:latest",
+            "image": "vulcansec/vulcan-trivy:latest",
             "required_vars": [
                 "REGISTRY_DOMAIN",
                 "REGISTRY_USERNAME",
                 "REGISTRY_PASSWORD"
             ],
-            "options": {
-                "branch": "",
-                "depth": 1
-            },
             "assets": [
                 "DockerImage"
-            ]
-        },
-        {
-            "name": "vulcan-trivy-repo",
-            "description": "Scan docker images using aquasec/trivy",
-            "image": "vulcan-trivy-repo-experimental:latest",
-            "required_vars": [
-                "GITHUB_ENTERPRISE_ENDPOINT",
-                "GITHUB_ENTERPRISE_TOKEN"
-            ],
-            "options": {
-                "branch": "",
-                "depth": 1
-            },
-            "assets": [
-                "GitRepository"
             ]
         },
         {
@@ -100,15 +80,6 @@
             ],
             "assets": [
                 "GitRepository"
-            ]
-        },
-        {
-            "name": "vulcan-exposed-http-endpoint",
-            "description": "This checks looks for well known or custom list of exposed path in a HTTP URL",
-            "image": "vulcansec/vulcan-exposed-http-endpoint:latest",
-            "required_vars": null,
-            "assets": [
-                "WebAddress"
             ]
         },
         {
