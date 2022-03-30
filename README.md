@@ -172,9 +172,23 @@ vulcan-local -t . -a GitRepository
 # Execute all checks . inferring the asset type
 vulcan-local -t .
 
-# Execute checks with options defined in the policy fast-web
-vulcan-local -t http://localhost:1234 -p fast-web
 ```
+
+### Policies
+
+Policies for vulcan-local are intended to abstract the overhead selecting the checks and options to scan any valid target.
+
+A local or remote file can be configured to load policies, and then the policy to apply can be set using the parameter `-p`, for example:
+
+```sh
+# Configuration file set through an env variable
+export VULCAN_LOCAL_CONFIG=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml
+
+# Run vulcan-local with the lightweight policy
+vulcan-local -c vulcan.yaml -p lightweight
+```
+
+_This feature is under development, and existing policies were created just for testing purposes._
 
 ### Exclusions
 
@@ -248,7 +262,3 @@ docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
   vulcan-local -t /src -u file:///app/script/checktypes-stable.json
 ```
-
-## Policies
-Policies for vulcan-local are intended to abstract the overhead selecting the checks and options for scanning an asset from the user.
-_This feature is under development, and existing policies were created just for testing purposes._
