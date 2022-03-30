@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/adevinta/vulcan-agent/agent"
+	"github.com/adevinta/vulcan-agent/backend"
 	"github.com/adevinta/vulcan-agent/backend/docker"
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	agentlog "github.com/adevinta/vulcan-agent/log"
@@ -180,12 +181,28 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			},
 		},
 	}
-	backend, err := docker.NewBackend(log, agentConfig, nil)
+
+	updater := func(params backend.RunParams, rc *docker.RunConfig) error {
+		// If the asset type is a DockerImage mount the docker socket in case the image is already there,
+		// and the check can access it.
+		if params.AssetType == "DockerImage" {
+			rc.HostConfig.Binds = append(rc.HostConfig.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+
+			// Some checks will fail because the reachability check.
+			// This will bypass the check (https://github.com/adevinta/vulcan-check-sdk/blob/master/helpers/target.go#L294)
+			// TODO: Find a propper way to do this either by updating IsDockerImgReachable or custom whitelisting in the check.
+			// This could be implemented in the
+			rc.ContainerConfig.Env = replaceEnv(rc.ContainerConfig.Env, backend.CheckAssetTypeVar, "LocalDockerImage")
+		}
+		return nil
+	}
+
+	backend, err := docker.NewBackend(log, agentConfig, updater)
 	if err != nil {
 		return config.ErrorExitCode, err
 	}
 
-	// Show progress to prevent CI/CD complaining of no output for long time
+	// Show progress to prevent CI/CD complaining of no output for long time.
 	quitProgress := make(chan bool)
 	go func() {
 		for {
@@ -199,7 +216,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}()
 
 	logAgent := log
-	// Mute the agent to Error except if in Debug mode
+	// Mute the agent to Error except if in Debug mode.
 	if log.Level != logrus.DebugLevel {
 		logAgent = logrus.New()
 		logAgent.SetFormatter(log.Formatter)
@@ -221,6 +238,16 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 
 	return reportCode, nil
+}
+
+func replaceEnv(envs []string, name, newValue string) []string {
+	for i, e := range envs {
+		if strings.HasPrefix(e, name+"=") {
+			envs[i] = fmt.Sprintf("%s=%s", name, newValue)
+			return envs
+		}
+	}
+	return envs
 }
 
 // checkDependencies checks that all the dependencies are present and run

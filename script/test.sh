@@ -18,6 +18,12 @@ echo "Test local path as a git repository excluding the github check"
 ./vulcan-local -t . -e github -u file://./script/checktypes-stable.json
 echo "exit=$?"
 
+# Add a path and a tag to bypass check target validations.
+docker tag vulcan-local path/vulcan-local:xxx
+echo "Test local docker image"
+./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy -u file://./script/checktypes-stable.json
+echo "exit=$?"
+
 echo "Docker test based on yaml config"
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock  \
     -v "$PWD":/target -e TRAVIS_BUILD_DIR=/target \
