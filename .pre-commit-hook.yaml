@@ -1,0 +1,6 @@
+-   id: vulcan-local
+    name: Vulcan local
+    description: This hook will check your code for vulnerabilities.
+    entry: vulcan-local
+    language: shell
+    types: [text]
