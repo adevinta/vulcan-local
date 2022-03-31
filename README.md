@@ -90,9 +90,11 @@ Usage:
 ```sh
 Usage of vulcan-local:
   -a value
-    	asset type of the last target (-t)
+    	asset type of the last target (-t) (eg DockerImage)
   -c value
-    	config file (i.e. -c vulcan.yaml). Can be used multiple times. (Also env VULCAN_LOCAL_CONFIG)
+    	config file (eg vulcan.yaml) (VULCAN_CONFIG=)
+  -checktypes value
+    	checktype uris (VULCAN_CHECKTYPES=)
   -concurrency int
     	max number of checks/containers to run concurrently (default 3)
   -docker string
@@ -107,21 +109,19 @@ Usage of vulcan-local:
   -ifname string
     	network interface where agent will be available for the checks (default "docker0")
   -l value
-    	log level [panic fatal error warning info debug trace] (default info)
+    	log level [panic fatal error warning info debug trace] (Default "info")
   -o value
-    	options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')
+    	options related to the last target (-t) (eg '{"max_scan_duration": 1}')
   -p string
-      policy to be applied to configure the checks and options to be run
+    	policy to execute
   -pullpolicy value
-    	when to pull for check images [Always IfNotPresent Never]
+    	when to pull for check images [Always IfNotPresent Never] (Default "IfNotPresent")
   -r string
-    	results file (i.e. -r results.json)
+    	results file (eg results.json)
   -s value
-    	filter by severity [CRITICAL HIGH MEDIUM LOW INFO] (default HIGH)
+    	filter by severity [CRITICAL HIGH MEDIUM LOW INFO] (Default "HIGH")
   -t value
-    	target to scan. Can be used multiple times.
-  -u value
-    	checktype uris. Can be used multiple times. (Also env VULCAN_CHECKTYPES_URI)
+    	target to scan (eg .)
   -version
     	print version
 ```
@@ -152,10 +152,10 @@ cat ~/my_password.txt | docker login --username foo --password-stdin private.reg
 Scan a single asset with all the checkTypes that apply
 
 ```sh
-vulcan-local -t http://localhost:1234 -i exposed -u file://./script/checktypes-stable.json
+vulcan-local -t http://localhost:1234 -i exposed -checktypes file://./script/checktypes-stable.json
 
-# Set VULCAN_CHECKTYPES_URI as the default checktypes uri (-u flag)
-export VULCAN_CHECKTYPES_URI=file://./script/checktypes-stable.json
+# Set VULCAN_CHECKTYPES as the default checktypes uri (-checktypes flag)
+export VULCAN_CHECKTYPES=file://./script/checktypes-stable.json
 
 # Execute all checks on WebAddress that matches 'exposed' regex
 vulcan-local -t http://localhost:1234 -i exposed
@@ -171,7 +171,6 @@ vulcan-local -t . -a GitRepository
 
 # Execute all checks . inferring the asset type
 vulcan-local -t .
-
 ```
 
 ### Policies
@@ -182,7 +181,7 @@ A local or remote file can be configured to load policies, and then the policy t
 
 ```sh
 # Configuration file set through an env variable
-export VULCAN_LOCAL_CONFIG=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml
+export VULCAN_CONFIG=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml
 
 # Run vulcan-local with the lightweight policy
 vulcan-local -c vulcan.yaml -p lightweight
@@ -251,7 +250,7 @@ Start scanning a local http server
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v $PWD/script:/app/script \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -u file:///app/script/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes file:///app/script/checktypes-stable.json
 ```
 
 Start scanning a local Git repository. **The target path must point to the base of a git repository.**
@@ -260,5 +259,5 @@ Start scanning a local Git repository. **The target path must point to the base 
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD/script:/app/script -v $PWD:/src \
   -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-  vulcan-local -t /src -u file:///app/script/checktypes-stable.json
+  vulcan-local -t /src -checktypes file:///app/script/checktypes-stable.json
 ```

@@ -65,9 +65,9 @@ install() {
 }
 
 run() {
-  if [ -z "$VULCAN_CHECKTYPES_URI" ]; then
+  if [ -z "$VULCAN_CHECKTYPES" ]; then
     echo "Using checktypes from $DEFAULT_CHECKTYPES"
-    export VULCAN_CHECKTYPES_URI=$DEFAULT_CHECKTYPES
+    export VULCAN_CHECKTYPES=$DEFAULT_CHECKTYPES
   fi
 
   echo "$BINARY_NAME ${*}"
