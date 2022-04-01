@@ -126,10 +126,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 	log.Debugf("Setting agent server on http://%s:%d/", agentIp, apiPort)
 
-	vars := cfg.Conf.Vars
-	// General config for the agent. Only the checks that require it will get this value.
-	vars["VULCAN_ALLOW_PRIVATE_IPS"] = strconv.FormatBool(true)
-
 	auths := []agentconfig.Auth{}
 	for _, r := range cfg.Conf.Registries {
 		if r.Server == "" || r.Username == "" || r.Password == "" {
@@ -167,7 +163,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			Port: fmt.Sprintf(":%d", apiPort),
 		},
 		Check: agentconfig.CheckConfig{
-			Vars: vars,
+			Vars: cfg.Conf.Vars,
 		},
 		Runtime: agentconfig.RuntimeConfig{
 			Docker: agentconfig.DockerConfig{
@@ -183,17 +179,48 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 
 	updater := func(params backend.RunParams, rc *docker.RunConfig) error {
+		newTarget := params.Target
+
 		// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 		// and the check can access it.
 		if params.AssetType == "DockerImage" {
 			rc.HostConfig.Binds = append(rc.HostConfig.Binds, "/var/run/docker.sock:/var/run/docker.sock")
 
-			// Some checks will fail because the reachability check.
+			// Some checks will fail because the reachability check as they expect remote urls.
 			// This will bypass the check (https://github.com/adevinta/vulcan-check-sdk/blob/master/helpers/target.go#L294)
 			// TODO: Find a propper way to do this either by updating IsDockerImgReachable or custom whitelisting in the check.
-			// This could be implemented in the
-			rc.ContainerConfig.Env = replaceEnv(rc.ContainerConfig.Env, backend.CheckAssetTypeVar, "LocalDockerImage")
+			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, backend.CheckAssetTypeVar, "LocalDockerImage")
+		} else if params.AssetType == "GitRepository" {
+
+			if path, err := generator.GetValidGitDirectory(params.Target); err == nil {
+				port, err := gs.AddGit(path)
+				if err != nil {
+					log.Errorf("Unable to create local git server check %v", err)
+					return nil
+				}
+				newTarget = fmt.Sprintf("http://%s:%d/", agentIp, port)
+			}
+
 		}
+
+		newTarget = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`).ReplaceAllString(newTarget, hostIp)
+
+		if params.Target != newTarget {
+			check := config.GetCheckById(cfg, params.CheckID)
+			if check == nil {
+				log.Errorf("check not found id=%s", params.CheckID)
+				return nil
+			}
+
+			log.Debugf("swaping target=%s new=%s check=%s", params.Target, newTarget, params.CheckID)
+			check.NewTarget = newTarget
+			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, backend.CheckTargetVar, newTarget)
+		}
+
+		// We allow all the checks to scan local assets.
+		// This could be tunned depending on the target/assettype
+		rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "VULCAN_ALLOW_PRIVATE_IPS", strconv.FormatBool(true))
+
 		return nil
 	}
 
@@ -240,14 +267,14 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	return reportCode, nil
 }
 
-func replaceEnv(envs []string, name, newValue string) []string {
+func upsertEnv(envs []string, name, newValue string) []string {
 	for i, e := range envs {
 		if strings.HasPrefix(e, name+"=") {
 			envs[i] = fmt.Sprintf("%s=%s", name, newValue)
 			return envs
 		}
 	}
-	return envs
+	return append(envs, fmt.Sprintf("%s=%s", name, newValue))
 }
 
 // checkDependencies checks that all the dependencies are present and run

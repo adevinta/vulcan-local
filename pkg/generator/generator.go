@@ -81,24 +81,6 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 		}
 
 		c.Id = uuid.New().String()
-		c.NewTarget = c.Target
-		if stringInSlice("GitRepository", ch.Assets) {
-			if path, err := GetValidGitDirectory(c.Target); err == nil {
-				c.AssetType = "GitRepository"
-				port, err := gs.AddGit(path)
-				if err != nil {
-					l.Errorf("Unable to create local git server check %w", err)
-					continue
-				}
-				c.NewTarget = fmt.Sprintf("http://%s:%d/", agentIp, port)
-			}
-		}
-		m1 := regexp.MustCompile(`(?i)(localhost|127.0.0.1)`)
-		c.NewTarget = m1.ReplaceAllString(c.NewTarget, hostIp)
-
-		// We allow all the checks to scan local assets.
-		// This could be tunned depending on the target/assettype
-		vars := append(ch.RequiredVars, "VULCAN_ALLOW_PRIVATE_IPS")
 
 		fingerprint := ComputeFingerprint(ch.Image, c.Target, c.AssetType, ops)
 		if dup, ok := unique[fingerprint]; ok {
@@ -107,7 +89,7 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 		}
 		unique[fingerprint] = c
 
-		l.Infof("Check name=%s image=%s target=%s new=%s type=%s id=%s", ch.Name, ch.Image, c.Target, c.NewTarget, c.AssetType, c.Id)
+		l.Infof("Check name=%s image=%s target=%s type=%s id=%s", ch.Name, ch.Image, c.Target, c.AssetType, c.Id)
 
 		// Store the checkType for traceability
 		c.Checktype = ch
@@ -120,11 +102,11 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			CheckID:      c.Id,
 			StartTime:    time.Now(),
 			Image:        ch.Image,
-			Target:       c.NewTarget,
+			Target:       c.Target,
 			Timeout:      timeout,
 			Options:      ops,
 			AssetType:    c.AssetType,
-			RequiredVars: vars,
+			RequiredVars: ch.RequiredVars,
 		})
 	}
 	return jobs, nil
