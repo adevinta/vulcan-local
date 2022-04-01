@@ -183,7 +183,7 @@ func main() {
 
 	exitCode, err = cmd.Run(cfg, log)
 	if err != nil {
-		log.Print(err)
+		log.Error(err)
 	}
 	os.Exit(exitCode)
 }

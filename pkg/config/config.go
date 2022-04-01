@@ -268,6 +268,16 @@ func getUriContent(uri string) ([]byte, error) {
 	return body, nil
 }
 
+func ImportRepositories(cfg *Config, l log.Logger) error {
+	for _, uri := range cfg.Conf.Repositories {
+		err := addRepo(cfg, uri, l)
+		if err != nil {
+			return fmt.Errorf("unable to load repository %s: %w", uri, err)
+		}
+	}
+	return nil
+}
+
 func ReadConfig(uri string, cfg *Config, l log.Logger) error {
 	bytes, err := getUriContent(uri)
 	if err != nil {
@@ -307,7 +317,7 @@ func (t sliceAppenderTransformer) Transformer(typ reflect.Type) func(dst, src re
 	return nil
 }
 
-func AddRepo(cfg *Config, uri string, l log.Logger) error {
+func addRepo(cfg *Config, uri string, l log.Logger) error {
 	content, err := getUriContent(uri)
 	if err != nil {
 		return err

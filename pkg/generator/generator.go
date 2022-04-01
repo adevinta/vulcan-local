@@ -358,16 +358,6 @@ func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
 	return true
 }
 
-func ImportRepositories(cfg *config.Config, l log.Logger) error {
-	for _, uri := range cfg.Conf.Repositories {
-		err := config.AddRepo(cfg, uri, l)
-		if err != nil {
-			l.Errorf("unable to add repository %s %+v", uri, err)
-		}
-	}
-	return nil
-}
-
 func GetValidGitDirectory(path string) (string, error) {
 	path, err := GetValidDirectory(path)
 	if err != nil {
