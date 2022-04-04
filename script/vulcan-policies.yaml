@@ -1,18 +1,15 @@
 policies:
   - name: default
-    checks: 
+    checks:
       - type: vulcan-seekret
       - type: vulcan-zap
-        options: 
+        options:
           max_scan_duration: 3
       - type: vulcan-trivy
 
   - name: lightweight
     checks:
       - type: vulcan-seekret
-      - type: vulcan-zap
-        options: 
-          max_scan_duration: 1
       - type: vulcan-trivy
 
   - name: full-scan
