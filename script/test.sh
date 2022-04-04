@@ -21,7 +21,7 @@ echo "exit=$?"
 # Add a path and a tag to bypass check target validations.
 docker tag vulcan-local path/vulcan-local:xxx
 echo "Test local docker image"
-./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy -u file://./script/checktypes-stable.json
+./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy -checktypes file://./script/checktypes-stable.json
 echo "exit=$?"
 
 echo "Docker test based on yaml config"
