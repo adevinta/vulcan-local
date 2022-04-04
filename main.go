@@ -19,8 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const envDefaultChecktypesUri = "VULCAN_CHECKTYPES_URI"
-const envDefaultVulcanLocalUri = "VULCAN_LOCAL_CONFIG"
+const (
+	envDefaultChecktypesUri  = "VULCAN_CHECKTYPES"
+	envDefaultVulcanLocalUri = "VULCAN_CONFIG"
+)
 
 var (
 	version = "dev"
@@ -64,27 +66,43 @@ func main() {
 	cmdRepositories := []string{}
 	cmdConfigs := []string{}
 
+	genFlagMsg := func(msg, example string, def string, env string, options interface{}) string {
+		if example != "" {
+			msg = fmt.Sprintf(`%s (eg %s)`, msg, example)
+		}
+		if options != nil {
+			msg = fmt.Sprintf("%s %v", msg, options)
+		}
+		if def != "" {
+			msg = fmt.Sprintf(`%s (Default "%v")`, msg, def)
+		}
+		if env != "" {
+			msg = fmt.Sprintf("%s (%s=%s)", msg, env, os.Getenv(env))
+		}
+		return msg
+	}
+
 	var showHelp, showVersion bool
 	flag.BoolVar(&showHelp, "h", false, "print usage")
 	flag.BoolVar(&showVersion, "version", false, "print version")
-	flag.Func("c", fmt.Sprintf("config file (i.e. -c vulcan.yaml). Can be used multiple times. (Also env %s)", envDefaultVulcanLocalUri), func(s string) error {
+	flag.Func("c", genFlagMsg("config file", "vulcan.yaml", "", envDefaultVulcanLocalUri, nil), func(s string) error {
 		cmdConfigs = append(cmdConfigs, s)
 		return nil
 	})
-	flag.Func("l", fmt.Sprintf("log level %v (default %s)", logrus.AllLevels, cfg.Conf.LogLevel.String()), func(s string) error {
+	flag.Func("l", genFlagMsg("log level", "", cfg.Conf.LogLevel.String(), "", logrus.AllLevels), func(s string) error {
 		return cfg.Conf.LogLevel.UnmarshalText([]byte(s))
 	})
 	flag.StringVar(&cfg.Conf.Policy, "p", "", "policy to execute")
-	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (i.e. -r results.json)")
+	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file (eg results.json)")
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
 	flag.StringVar(&cfg.Conf.Exclude, "e", cfg.Conf.Exclude, "exclude checktype regex")
-	flag.Func("t", "target to scan. Can be used multiple times.", func(s string) error {
+	flag.Func("t", genFlagMsg("target to scan", ".", "", "", nil), func(s string) error {
 		cmdTargets = append(cmdTargets, &config.Target{
 			Target: s,
 		})
 		return nil
 	})
-	flag.Func("a", "asset type of the last target (-t)", func(s string) error {
+	flag.Func("a", genFlagMsg("asset type of the last target (-t)", "DockerImage", "", "", nil), func(s string) error {
 		if len(cmdTargets) == 0 {
 			return fmt.Errorf("missing target")
 		}
@@ -95,7 +113,7 @@ func main() {
 		lastTarget.AssetType = s
 		return nil
 	})
-	flag.Func("o", `options related to the last target (-t) used in all the their checks (i.e. '{"depth":"1", "max_scan_duration": 1}')`, func(s string) error {
+	flag.Func("o", genFlagMsg("options related to the last target (-t)", `'{"max_scan_duration": 1}'`, "", "", nil), func(s string) error {
 		if len(cmdTargets) == 0 {
 			return fmt.Errorf("missing target")
 		}
@@ -108,10 +126,10 @@ func main() {
 		}
 		return nil
 	})
-	flag.Func("s", fmt.Sprintf("filter by severity %v (default %s)", config.SeverityNames(), cfg.Reporting.Severity.Data().Name), func(s string) error {
+	flag.Func("s", genFlagMsg("filter by severity", "", cfg.Reporting.Severity.Data().Name, "", config.SeverityNames()), func(s string) error {
 		return cfg.Reporting.Severity.UnmarshalText([]byte(s))
 	})
-	flag.Func("u", fmt.Sprintf("checktype uris. Can be used multiple times. (Also env %s)", envDefaultChecktypesUri), func(s string) error {
+	flag.Func("checktypes", genFlagMsg("checktype uris", "", "", envDefaultChecktypesUri, nil), func(s string) error {
 		cmdRepositories = append(cmdRepositories, s)
 		return nil
 	})
@@ -119,7 +137,8 @@ func main() {
 	flag.StringVar(&cfg.Conf.GitBin, cfg.Conf.GitBin, cfg.Conf.GitBin, "git binary")
 	flag.StringVar(&cfg.Conf.IfName, "ifname", cfg.Conf.IfName, "network interface where agent will be available for the checks")
 	flag.IntVar(&cfg.Conf.Concurrency, "concurrency", cfg.Conf.Concurrency, "max number of checks/containers to run concurrently")
-	flag.Func("pullpolicy", fmt.Sprintf("when to pull for check images %s", agentconfig.PullPolicies()), func(s string) error {
+	defPullPolicyName, _ := cfg.Conf.PullPolicy.String()
+	flag.Func("pullpolicy", genFlagMsg("when to pull for check images", "", defPullPolicyName, "", agentconfig.PullPolicies()), func(s string) error {
 		return cfg.Conf.PullPolicy.UnmarshalText([]byte(s))
 	})
 	flag.Parse()
