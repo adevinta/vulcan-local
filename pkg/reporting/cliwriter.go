@@ -87,6 +87,14 @@ func printVulnerability(v *ExtendedVulnerability, l log.Logger) string {
 		dlines = splitLines(v.Vulnerability.Details, baseIndent, Width)
 		fmt.Fprintf(buf, "\n\n%s\n%s%s", formatString("DETAILS:", 0), indentate(baseIndent), strings.Join(dlines, "\n"+indentate(baseIndent)))
 	}
+	if v.Vulnerability.ImpactDetails != "" {
+		dlines = splitLines(v.Vulnerability.ImpactDetails, baseIndent, Width)
+		fmt.Fprintf(buf, "\n\n%s\n%s%s", formatString("IMPACT:", 0), indentate(baseIndent), strings.Join(dlines, "\n"+indentate(baseIndent)))
+	}
+	if len(v.Vulnerability.Recommendations) != 0 && v.Vulnerability.Recommendations[0] != "" {
+		sep := "\n" + indentate(baseIndent) + "- "
+		fmt.Fprintf(buf, "\n\n%s%s%s", formatString("RECOMMENDATIONS:", 0), sep, strings.Join(v.Vulnerability.Recommendations, sep))
+	}
 	if len(v.Vulnerability.References) != 0 && v.Vulnerability.References[0] != "" {
 		sep := "\n" + indentate(baseIndent) + "- "
 		fmt.Fprintf(buf, "\n\n%s%s%s", formatString("REFERENCES:", 0), sep, strings.Join(v.Vulnerability.References, sep))

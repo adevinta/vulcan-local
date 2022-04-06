@@ -38,6 +38,7 @@ func updateReport(e *ExtendedVulnerability, c *config.Check) {
 	e.Details = strings.ReplaceAll(e.Details, c.NewTarget, c.Target)
 	e.AffectedResource = strings.ReplaceAll(e.AffectedResource, c.NewTarget, c.Target)
 	e.AffectedResourceString = strings.ReplaceAll(e.AffectedResourceString, c.NewTarget, c.Target)
+	e.ImpactDetails = strings.ReplaceAll(e.ImpactDetails, c.NewTarget, c.Target)
 	for i := range e.Recommendations {
 		e.Recommendations[i] = strings.ReplaceAll(e.Recommendations[i], c.NewTarget, c.Target)
 	}
