@@ -191,7 +191,7 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 	// Get max reported score in vulnerabilities
 	var maxScore float32 = -1.0
 	for _, v := range vs {
-		if v.Score > float32(maxScore) {
+		if v.Score > float32(maxScore) && !v.Excluded {
 			maxScore = v.Score
 		}
 	}
