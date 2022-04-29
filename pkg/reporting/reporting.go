@@ -165,12 +165,12 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		if outputFile == "-" {
 			fmt.Fprint(os.Stderr, string(str))
 		} else {
-			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-			if os.IsNotExist(err) {
-				dir := filepath.Dir(outputFile)
-				os.MkdirAll(dir, 0o744)
-				f, err = os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+			dir := filepath.Dir(outputFile)
+			err := os.MkdirAll(dir, 0o744)
+			if err != nil {
+				return config.ErrorExitCode, fmt.Errorf("failed to create directory %s: %s", dir, err)
 			}
+			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 			if err != nil {
 				return config.ErrorExitCode, fmt.Errorf("unable to open report file %s %+v", outputFile, err)
 			}
