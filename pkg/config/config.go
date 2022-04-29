@@ -69,7 +69,6 @@ type Registry struct {
 
 type Conf struct {
 	DockerBin    string                 `yaml:"dockerBin"`
-	GitBin       string                 `yaml:"gitBin"`
 	PullPolicy   agentconfig.PullPolicy `yaml:"pullPolicy"`
 	Vars         map[string]string      `yaml:"vars"`
 	Repositories []string               `yaml:"repositories"`

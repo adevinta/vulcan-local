@@ -83,7 +83,6 @@ reporting:
 Requirements:
 
 - Docker has to be running on the local machine.
-- Git
 
 Usage:
 
@@ -101,8 +100,6 @@ Usage of vulcan-local:
     	docker binary (default "docker")
   -e string
     	exclude checktype regex
-  -git string
-    	git binary (default "git")
   -h	print usage
   -i string
     	include checktype regex
