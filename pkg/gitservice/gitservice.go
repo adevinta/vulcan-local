@@ -88,6 +88,9 @@ func (gs *gitService) Shutdown() {
 
 func (gs *gitService) create_tmp_repository(path string) (string, error) {
 	tmp_repository_path := filepath.Join(os.TempDir(), "vulcan-local-tmp-repository")
+	if err := os.RemoveAll(tmp_repository_path); err != nil {
+		return "", err
+	}
 	err := copy.Copy(path, tmp_repository_path)
 	os.RemoveAll(filepath.Join(tmp_repository_path, ".git"))
 	gs.log.Debugf("Copied %s to %s", path, tmp_repository_path)
