@@ -87,19 +87,19 @@ func (gs *gitService) Shutdown() {
 }
 
 func (gs *gitService) create_tmp_repository(path string) (string, error) {
-	tmp_repository_path := filepath.Join(os.TempDir(), "vulcan-local-tmp-repository")
-	if err := os.RemoveAll(tmp_repository_path); err != nil {
+	tmpRepositoryPath := filepath.Join(os.TempDir(), "vulcan-local-tmp-repository")
+	if err := os.RemoveAll(tmpRepositoryPath); err != nil {
 		return "", err
 	}
-	err := copy.Copy(path, tmp_repository_path)
-	os.RemoveAll(filepath.Join(tmp_repository_path, ".git"))
-	gs.log.Debugf("Copied %s to %s", path, tmp_repository_path)
+	err := copy.Copy(path, tmpRepositoryPath)
+	os.RemoveAll(filepath.Join(tmpRepositoryPath, ".git"))
+	gs.log.Debugf("Copied %s to %s", path, tmpRepositoryPath)
 	if err != nil {
 		gs.log.Errorf("Error coping tmp file: %s", err)
 		return "", err
 	}
-	repository, _ := git.PlainInit(tmp_repository_path, false)
-	w, err := repository.Worktree()
+	r, _ := git.PlainInit(tmpRepositoryPath, false)
+	w, err := r.Worktree()
 	if err != nil {
 		gs.log.Errorf("Error opening worktree: %s", err)
 		return "", err
@@ -110,5 +110,5 @@ func (gs *gitService) create_tmp_repository(path string) (string, error) {
 		gs.log.Errorf("Error committing: %s", err)
 		return "", err
 	}
-	return tmp_repository_path, nil
+	return tmpRepositoryPath, nil
 }
