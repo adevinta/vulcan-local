@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -27,6 +28,8 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	"github.com/adevinta/vulcan-local/pkg/sqsservice"
+	"github.com/go-git/go-git/v5"
+	copy "github.com/otiai10/copy"
 	"github.com/phayes/freeport"
 	"github.com/sirupsen/logrus"
 )
@@ -193,7 +196,32 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		} else if params.AssetType == "GitRepository" {
 
 			if path, err := generator.GetValidGitDirectory(params.Target); err == nil {
-				port, err := gs.AddGit(path)
+				tmp_repository_path := filepath.Join(os.TempDir(), "vulcan-check-generator-repository")
+				copy.Copy(path, tmp_repository_path)
+				os.RemoveAll(filepath.Join(tmp_repository_path, ".git"))
+				log.Debugf("Copied %s to %s", path, tmp_repository_path)
+				if err != nil {
+					log.Errorf("Error creating tmp file: %s", err)
+					return nil
+				}
+				repository, _ := git.PlainInit(tmp_repository_path, false)
+				w, err := repository.Worktree()
+				if err != nil {
+					log.Errorf("Error opening worktree: %s", err)
+				}
+				err = w.Checkout(&git.CheckoutOptions{
+					Create: true,
+					Force:  false,
+				})
+				if err != nil {
+					log.Errorf("Error checking out branch: %s", err)
+				}
+				w.AddGlob(".")
+				_, err = w.Commit("", &git.CommitOptions{})
+				if err != nil {
+					log.Errorf("Error committing: %s", err)
+				}
+				port, err := gs.AddGit(tmp_repository_path)
 				if err != nil {
 					log.Errorf("Unable to create local git server check %v", err)
 					return nil
