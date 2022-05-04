@@ -48,7 +48,6 @@ func main() {
 	cfg := &config.Config{
 		Conf: config.Conf{
 			DockerBin:   "docker",
-			GitBin:      "git",
 			LogLevel:    logrus.InfoLevel,
 			Concurrency: 3,
 			IfName:      "docker0",
@@ -134,7 +133,6 @@ func main() {
 		return nil
 	})
 	flag.StringVar(&cfg.Conf.DockerBin, cfg.Conf.DockerBin, cfg.Conf.DockerBin, "docker binary")
-	flag.StringVar(&cfg.Conf.GitBin, cfg.Conf.GitBin, cfg.Conf.GitBin, "git binary")
 	flag.StringVar(&cfg.Conf.IfName, "ifname", cfg.Conf.IfName, "network interface where agent will be available for the checks")
 	flag.IntVar(&cfg.Conf.Concurrency, "concurrency", cfg.Conf.Concurrency, "max number of checks/containers to run concurrently")
 	defPullPolicyName, _ := cfg.Conf.PullPolicy.String()

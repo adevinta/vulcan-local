@@ -289,12 +289,6 @@ func checkDependencies(cfg *config.Config, log agentlog.Logger) error {
 		return fmt.Errorf("checking docker dependency bin=%s %w %s", cfg.Conf.DockerBin, err, cmdOut.String())
 	}
 
-	log.Debugf("Checking dependency git=%s", cfg.Conf.GitBin)
-	cmd = exec.Command(cfg.Conf.GitBin, "version")
-	cmd.Stderr = &cmdOut
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("checking git dependency bin=%s %w %s", cfg.Conf.GitBin, err, cmdOut.String())
-	}
 	return nil
 }
 
