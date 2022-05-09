@@ -43,7 +43,7 @@ func New(l log.Logger) GitService {
 }
 
 func (gs *gitService) AddGit(path string) (int, error) {
-	path, err := gs.create_tmp_repository(path)
+	path, err := gs.createTmpRepository(path)
 	if err != nil {
 		return 0, err
 	}
@@ -86,7 +86,7 @@ func (gs *gitService) Shutdown() {
 	gs.wg.Wait()
 }
 
-func (gs *gitService) create_tmp_repository(path string) (string, error) {
+func (gs *gitService) createTmpRepository(path string) (string, error) {
 	tmpRepositoryPath := filepath.Join(os.TempDir(), "vulcan-local-tmp-repository")
 	if err := os.RemoveAll(tmpRepositoryPath); err != nil {
 		return "", err
