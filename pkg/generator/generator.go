@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -21,7 +22,10 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	types "github.com/adevinta/vulcan-types"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/uuid"
+	"github.com/otiai10/copy"
 )
 
 func getCheckType(cfg *config.Config, checkTypeRef config.ChecktypeRef) (*config.Checktype, error) {
@@ -124,7 +128,7 @@ func stringInSlice(a string, list []string) bool {
 // getTypesFromIdentifier infers the AssetType from an asset identifier
 // This code is borrowed from https://github.com/adevinta/vulcan-api/blob/master/pkg/api/service/assets.go#L598
 // could be moved to vulcan-types in order to allow reuse.
-func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
+func getTypesFromIdentifier(target config.Target, l log.Logger) ([]config.Target, error) {
 	identifier := target.Target
 	a := config.Target{
 		Target:  identifier,
@@ -148,6 +152,8 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 
 	if _, err := GetValidGitDirectory(identifier); err == nil {
 		a.AssetType = "GitRepository"
+		tmpRepositoryPath, _ := createTmpRepository(a.Target, l)
+		a.Target = tmpRepositoryPath
 		return []config.Target{a}, nil
 	}
 
@@ -229,7 +235,7 @@ func ComputeTargets(cfg *config.Config, l log.Logger) error {
 	for _, t := range cfg.Targets {
 		if t.AssetType == "" {
 			// Try to infer the asset type
-			if inferredTargets, err := getTypesFromIdentifier(t); err != nil {
+			if inferredTargets, err := getTypesFromIdentifier(t, l); err != nil {
 				l.Errorf("skipping target %s unable to infer assetType %+v", t.Target, err)
 				continue
 			} else {
@@ -392,4 +398,51 @@ func GetPolicy(cfg *config.Config) (config.Policy, error) {
 		}
 	}
 	return config.Policy{}, fmt.Errorf("Policy %s not found", cfg.Conf.Policy)
+}
+
+func createTmpRepository(path string, l log.Logger) (string, error) {
+	tmpPath := filepath.Join(os.TempDir(), "tmp-vulcan-repos")
+	if err := os.RemoveAll(tmpPath); err != nil {
+		l.Errorf("Error cleaning tmp file: %s", err)
+		return "", err
+	}
+	err := os.Mkdir(tmpPath, 0755)
+	if err != nil {
+		l.Errorf("Error creating tmp directory: %s", err)
+		return "", err
+	}
+	tmpRepositoryPath, err := ioutil.TempDir(tmpPath, filepath.Base(path))
+	if err != nil {
+		l.Errorf("Error creating tmp file: %s", err)
+		return "", err
+	}
+	err = copy.Copy(path, tmpRepositoryPath)
+	if err != nil {
+		l.Errorf("Error coping tmp file: %s", err)
+		return "", err
+	}
+	l.Debugf("Copied %s to %s", path, tmpRepositoryPath)
+	os.RemoveAll(filepath.Join(tmpRepositoryPath, ".git"))
+	r, err := git.PlainInit(tmpRepositoryPath, false)
+	if err != nil {
+		l.Errorf("Error initializing git repository: %s", err)
+		return "", err
+	}
+	w, err := r.Worktree()
+	if err != nil {
+		l.Errorf("Error opening worktree: %s", err)
+		return "", err
+	}
+	w.AddGlob(".")
+	_, err = w.Commit("", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "vulcan",
+			Email: "vulcan@adevinta.com",
+		},
+	})
+	if err != nil {
+		l.Errorf("Error committing: %s", err)
+		return "", err
+	}
+	return tmpRepositoryPath, nil
 }
