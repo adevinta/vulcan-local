@@ -133,7 +133,7 @@ func checktypesFromCode(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 	}
 	l.Debugf("Looking for checktypes defined in the subdirs of the dir %s", path)
 	// err==errNoChecktypeDir, so the directory itself does not contain a
-	// checktype. Check any if its subdirs contains one or more checktypes
+	// checktype. Check if any of its subdirs contains one or more checktypes
 	// definitions.
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -160,7 +160,7 @@ func checktypesFromCode(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 func readChecktype(dirpath string, l log.Logger) (Checktype, error) {
 	l.Debugf("Looking if the directory %s contains the code of a checktype", dirpath)
 	manifestPath := filepath.Join(dirpath, "manifest.toml")
-	l.Debugf("Trying to read manifest from %s", manifestPath)
+	l.Debugf("Trying to read a manifest from %s", manifestPath)
 	m, err := ReadManifest(manifestPath)
 	// We consider a directory to be contain the code of a check if it has
 	// a manifest.
