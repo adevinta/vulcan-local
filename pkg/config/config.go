@@ -5,14 +5,10 @@ Copyright 2021 Adevinta
 package config
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	neturl "net/url"
 	"reflect"
 	"regexp"
-	"strings"
-	"time"
 
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-agent/log"
@@ -20,20 +16,20 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
+	"github.com/adevinta/vulcan-local/pkg/content"
 )
 
-// ChektypeRef represents a checktype with an optional prefix denoting the repository (i.e. default/vulcan-zap vulcan-zap ).
-type ChecktypeRef string
-
 type Check struct {
-	Type      ChecktypeRef           `yaml:"type"`
-	Target    string                 `yaml:"target"`
-	Options   map[string]interface{} `yaml:"options,omitempty"`
-	Timeout   *int                   `yaml:"timeout,omitempty"`
-	AssetType string                 `yaml:"assetType,omitempty"`
+	Type      checktypes.ChecktypeRef `yaml:"type"`
+	Target    string                  `yaml:"target"`
+	Options   map[string]interface{}  `yaml:"options,omitempty"`
+	Timeout   *int                    `yaml:"timeout,omitempty"`
+	AssetType string                  `yaml:"assetType,omitempty"`
 	NewTarget string
 	Id        string
-	Checktype *Checktype
+	Checktype *checktypes.Checktype
 }
 
 type Target struct {
@@ -43,12 +39,12 @@ type Target struct {
 }
 
 type Config struct {
-	Conf       Conf                       `yaml:"conf"`
-	Reporting  Reporting                  `yaml:"reporting,omitempty"`
-	Checks     []Check                    `yaml:"checks"`
-	Targets    []Target                   `yaml:"targets"`
-	CheckTypes map[ChecktypeRef]Checktype `yaml:"checkTypes"`
-	Policies   []Policy                   `yaml:"policies"`
+	Conf       Conf                  `yaml:"conf"`
+	Reporting  Reporting             `yaml:"reporting,omitempty"`
+	Checks     []Check               `yaml:"checks"`
+	Targets    []Target              `yaml:"targets"`
+	CheckTypes checktypes.Checktypes `yaml:"checkTypes"`
+	Policies   []Policy              `yaml:"policies"`
 }
 
 type Policy struct {
@@ -57,8 +53,8 @@ type Policy struct {
 }
 
 type PolicyCheck struct {
-	CheckType ChecktypeRef           `yaml:"type"`
-	Options   map[string]interface{} `yaml:"options,omitempty"`
+	CheckType checktypes.ChecktypeRef `yaml:"type"`
+	Options   map[string]interface{}  `yaml:"options,omitempty"`
 }
 
 type Registry struct {
@@ -97,22 +93,6 @@ type Reporting struct {
 	Format     string      `yaml:"format"`
 	OutputFile string      `yaml:"outputFile"`
 	Exclusions []Exclusion `yaml:"exclusions"`
-}
-
-// Definition borrowed from vulcan-checks-bsys.
-type Checktype struct {
-	Name         string                 `json:"name"`
-	Description  string                 `json:"description"`
-	Timeout      int                    `json:"timeout,omitempty"`
-	Image        string                 `json:"image"`
-	Options      map[string]interface{} `json:"options,omitempty"`
-	RequiredVars []string               `json:"required_vars"`
-	QueueName    string                 `json:"queue_name,omitempty"`
-	Assets       []string               `json:"assets"`
-}
-
-type Manifest struct {
-	CheckTypes []Checktype
 }
 
 type Severity int
@@ -235,71 +215,30 @@ func FindSeverityByScore(score float32) Severity {
 	return severities[len(severities)-1].Severity
 }
 
-func getUriContent(uri string) ([]byte, error) {
-	if uri == "" {
-		return nil, fmt.Errorf("empty uri")
-	}
-	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
-		client := http.Client{
-			Timeout: time.Second * 10,
-		}
-		req, err := http.NewRequest(http.MethodGet, uri, nil)
-		if err != nil {
-			return nil, fmt.Errorf("unable to request uri %s: %w", uri, err)
-		}
-		res, err := client.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get uri %s: %w", uri, err)
-		}
-		if res.Body != nil {
-			defer res.Body.Close()
-		}
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read uri %s: %w", uri, err)
-		}
-		return body, nil
-	}
-
-	uri = strings.TrimPrefix(uri, "file://")
-	body, err := ioutil.ReadFile(uri)
+func ReadConfig(url string, cfg *Config, l log.Logger) error {
+	u, err := neturl.Parse(url)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %s: %w", uri, err)
+		return err
 	}
-	return body, nil
-}
-
-func ImportRepositories(cfg *Config, l log.Logger) error {
-	for _, uri := range cfg.Conf.Repositories {
-		err := addRepo(cfg, uri, l)
-		if err != nil {
-			return fmt.Errorf("unable to load repository %s: %w", uri, err)
-		}
-	}
-	return nil
-}
-
-func ReadConfig(uri string, cfg *Config, l log.Logger) error {
-	bytes, err := getUriContent(uri)
+	bytes, err := content.Download(u)
 	if err != nil {
 		return err
 	}
 
 	c, err := envsubst.EvalEnv(string(bytes))
 	if err != nil {
-		return fmt.Errorf("unable to eval envs in %s: %w", uri, err)
+		return fmt.Errorf("unable to eval envs in %s: %w", url, err)
 	}
 	bytes = []byte(c)
 	newConfig := Config{}
 	err = yaml.Unmarshal(bytes, &newConfig)
 	if err != nil {
-		return fmt.Errorf("unable to decode yaml %s: %w", uri, err)
+		return fmt.Errorf("unable to decode yaml %s: %w", url, err)
 	}
-
 	if err = mergo.Merge(cfg, newConfig, mergo.WithTransformers(sliceAppenderTransformer{})); err != nil {
-		return fmt.Errorf("unable to merge config %s: %w", uri, err)
+		return fmt.Errorf("unable to merge config %s: %w", url, err)
 	}
-	l.Infof("Loaded config from uri=%s", uri)
+	l.Infof("Loaded config from url=%s", url)
 	return nil
 }
 
@@ -313,33 +252,6 @@ func (t sliceAppenderTransformer) Transformer(typ reflect.Type) func(dst, src re
 				dst.Set(reflect.AppendSlice(dst, src))
 			}
 			return nil
-		}
-	}
-	return nil
-}
-
-func addRepo(cfg *Config, uri string, l log.Logger) error {
-	content, err := getUriContent(uri)
-	if err != nil {
-		return err
-	}
-	man := Manifest{}
-	err = json.Unmarshal(content, &man)
-	if err != nil {
-		return err
-	}
-
-	for _, c := range man.CheckTypes {
-		cfg.CheckTypes[ChecktypeRef(c.Name)] = c
-	}
-	l.Infof("Loaded checktypes uri=%s checktypes=%d", uri, len(man.CheckTypes))
-	return nil
-}
-
-func GetCheckById(cfg *Config, id string) *Check {
-	for i, c := range cfg.Checks {
-		if c.Id == id {
-			return &cfg.Checks[i]
 		}
 	}
 	return nil

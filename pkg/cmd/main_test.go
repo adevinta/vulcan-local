@@ -14,6 +14,7 @@ import (
 	"time"
 
 	agentlog "github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
@@ -238,7 +239,7 @@ func TestCheckRequiredVariables(t *testing.T) {
 				},
 				Checks: []config.Check{
 					{
-						Checktype: &config.Checktype{
+						Checktype: &checktypes.Checktype{
 							RequiredVars: []string{"A", "B", "C"},
 						},
 					},
@@ -259,7 +260,7 @@ func TestCheckRequiredVariables(t *testing.T) {
 				},
 				Checks: []config.Check{
 					{
-						Checktype: &config.Checktype{
+						Checktype: &checktypes.Checktype{
 							RequiredVars: []string{"A", "B", "C"},
 						},
 					},
@@ -279,7 +280,7 @@ func TestCheckRequiredVariables(t *testing.T) {
 				},
 				Checks: []config.Check{
 					{
-						Checktype: &config.Checktype{
+						Checktype: &checktypes.Checktype{
 							RequiredVars: []string{"A", "B", "C"},
 						},
 					},
