@@ -14,6 +14,7 @@ import (
 
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/jesusfcr/gittp"
 	"github.com/otiai10/copy"
 	"github.com/phayes/freeport"
@@ -115,7 +116,12 @@ func (gs *gitService) createTmpRepository(path string) (string, error) {
 		return "", err
 	}
 	w.AddGlob(".")
-	_, err = w.Commit("", &git.CommitOptions{})
+	_, err = w.Commit("", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "vulcan",
+			Email: "vulcan@adevinta.com",
+		},
+	})
 	if err != nil {
 		gs.log.Errorf("Error committing: %s", err)
 		return "", err
