@@ -58,7 +58,7 @@ func (gs *gitService) AddGit(path string) (int, error) {
 		return 0, err
 	}
 	config := gittp.ServerConfig{
-		Path:       path,
+		Path:       tmpDir,
 		Debug:      false,
 		PreCreate:  gittp.UseGithubRepoNames,
 		PreReceive: gittp.MasterOnly,
