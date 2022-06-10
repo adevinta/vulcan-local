@@ -1,12 +1,12 @@
 module github.com/adevinta/vulcan-local
 
-go 1.17
+go 1.18
 
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
-	github.com/adevinta/vulcan-agent v0.0.0-20220228145114-50557ff2fd82
-	github.com/adevinta/vulcan-report v0.0.0-20211117082128-cadc974cc14c
+	github.com/adevinta/vulcan-agent v1.0.0
+	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.0.0
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.4.2
@@ -22,17 +22,17 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.0.0 // indirect
-	github.com/DataDog/datadog-go v3.7.1+incompatible // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/BurntSushi/toml v1.1.0 // indirect
+	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
-	github.com/adevinta/vulcan-metrics-client v0.0.0-20210317131634-8775c25303f7 // indirect
-	github.com/aws/aws-sdk-go v1.44.19 // indirect
-	github.com/containerd/containerd v1.6.0 // indirect
-	github.com/docker/cli v20.10.12+incompatible // indirect
+	github.com/adevinta/vulcan-metrics-client v1.0.0 // indirect
+	github.com/aws/aws-sdk-go v1.44.29 // indirect
+	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.12+incompatible // indirect
+	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
@@ -41,8 +41,7 @@ require (
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -57,13 +56,10 @@ require (
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
-	google.golang.org/grpc v1.44.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
