@@ -50,10 +50,10 @@ dockers:
 
     # Templates of the Docker image names.
     image_templates:
-    - "{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Tag }}"
-    - "{{ .Env.TRAVIS_REPO_SLUG }}:v{{ .Major }}"
-    - "{{ .Env.TRAVIS_REPO_SLUG }}:v{{ .Major }}.{{ .Minor }}"
-    - "{{ .Env.TRAVIS_REPO_SLUG }}:latest"
+    - '{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Version }}'
+    - '{{ if and (not .Prerelease) .Patch }}{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Major }}.{{ .Minor }}{{ end }}'
+    - '{{ if and (not .Prerelease) .Minor }}{{ .Env.TRAVIS_REPO_SLUG }}:{{ .Major }}{{ end }}'
+    - '{{ if not .Prerelease }}{{ .Env.TRAVIS_REPO_SLUG }}:latest{{ end }}'
 
     # Skips the docker push.
     # Could be useful if you also do draft releases.
