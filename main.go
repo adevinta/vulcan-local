@@ -14,6 +14,7 @@ import (
 	"time"
 
 	agentconfig "github.com/adevinta/vulcan-agent/config"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/cmd"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/sirupsen/logrus"
@@ -58,7 +59,7 @@ func main() {
 			Format:   "json",
 			Severity: config.SeverityHigh,
 		},
-		CheckTypes: map[config.ChecktypeRef]config.Checktype{},
+		CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{},
 		Checks:     []config.Check{},
 	}
 
@@ -142,7 +143,6 @@ func main() {
 		return cfg.Conf.PullPolicy.UnmarshalText([]byte(s))
 	})
 	flag.Parse()
-
 	log.SetLevel(cfg.Conf.LogLevel)
 
 	if showHelp {
@@ -185,11 +185,11 @@ func main() {
 		// Overwrite the yaml config with the command line flags.
 		flag.Parse()
 	}
-
 	if repo := os.Getenv(envDefaultChecktypesUri); repo != "" {
 		log.Debugf("Adding config from %s uri=%s", envDefaultChecktypesUri, repo)
 		cfg.Conf.Repositories = append(cfg.Conf.Repositories, repo)
 	}
+
 	cfg.Conf.Repositories = append(cfg.Conf.Repositories, cmdRepositories...)
 
 	// Overwrite config targets in case of command line targets
