@@ -98,6 +98,8 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		return config.SuccessExitCode, nil
 	}
 
+	checkRequiredVariables(cfg, log)
+
 	// AWS Credentials are required for sqs
 	os.Setenv("AWS_REGION", "local")
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "TBD")
@@ -359,4 +361,17 @@ func GetHostIP(l agentlog.Logger) string {
 	ip := strings.TrimSuffix(cmdOut.String(), "\n")
 	l.Debugf("Hostip=%s", ip)
 	return ip
+}
+
+// checkRequiredVariables checks that all the required variables are configured and
+// report a warn if they are not
+func checkRequiredVariables(cfg *config.Config, log *logrus.Logger) {
+	for _, check := range cfg.Checks {
+		for _, requiredVar := range check.Checktype.RequiredVars {
+			if val, ok := cfg.Conf.Vars[requiredVar]; ok && len(val) == 0 || !ok {
+				log.Warnf("Missing required variable %s for the check %s and the target \"%s\". "+
+					"The check may fail or not be executed.", requiredVar, check.Checktype.Name, check.Target)
+			}
+		}
+	}
 }
