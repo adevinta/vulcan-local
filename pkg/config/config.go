@@ -89,6 +89,7 @@ type Exclusion struct {
 	Summary          string `yaml:"summary"`
 	AffectedResource string `yaml:"affectedResource"`
 	Fingerprint      string `yaml:"fingerprint"`
+	Description      string `yaml:"description"`
 }
 
 type Reporting struct {
