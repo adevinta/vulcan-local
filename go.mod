@@ -8,12 +8,14 @@ require (
 	github.com/adevinta/vulcan-agent v1.0.0
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.0.0
+	github.com/docker/docker v20.10.17+incompatible
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/uuid v1.3.0
 	github.com/imdario/mergo v0.3.13
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.7.0
 	github.com/p4tin/goaws v1.1.2
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
@@ -32,7 +34,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.29 // indirect
 	github.com/docker/cli v20.10.17+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
