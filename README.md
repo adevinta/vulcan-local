@@ -199,6 +199,7 @@ When specified, it applies a `contains` evaluation over the following fields:
 - affectedResource: Applies either to `affectedResource` and `affectedResourceString`
 - target
 - fingerprint
+- description: A brief explanation as to why the finding should be excluded from the report.
 
 ```yaml
 reporting:
@@ -206,8 +207,10 @@ reporting:
     - summary: Leaked
     - affectedResource: libgcrypt
       target: .
+      description: "libgcrypt has a known and accepted vulnerability."
     - affectedResource: busybox
       target: .
+      description: "busybox is not relevant"
     - affectedResource: ncurses
       target: latest
     - fingerprint: 7820aa24a96f0fcd4717933772a8bc89552a0c1509f3d90b14d885d25e60595f

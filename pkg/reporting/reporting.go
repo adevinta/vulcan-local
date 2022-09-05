@@ -76,6 +76,22 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 	return vulns
 }
 
+// checkExclusionDescriptions checks that the exlusions have the description
+func checkExclusionDescriptions(cfg *config.Config, l log.Logger) {
+
+	for _, e := range cfg.Reporting.Exclusions {
+		if e.Description == "" {
+			l.Infof("Missing description for the exclusion:\n"+
+				" - Target: %s\n"+
+				" - Summary: %s\n"+
+				" - AffectedResource: %s\n"+
+				" - Fingerprint:  %s\n",
+				e.Target, e.Summary, e.AffectedResource, e.Fingerprint)
+
+		}
+	}
+}
+
 func ShowSummary(cfg *config.Config, results *results.ResultsServer, l log.Logger) {
 	buf := new(bytes.Buffer)
 	fmt.Fprint(buf, "\nCheck summary:\n\n")
@@ -134,6 +150,8 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 	if cfg.Reporting.Format != "json" {
 		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
 	}
+
+	checkExclusionDescriptions(cfg, l)
 
 	requested := cfg.Reporting.Severity.Data()
 
