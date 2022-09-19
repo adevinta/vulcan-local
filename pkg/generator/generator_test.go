@@ -553,7 +553,7 @@ func TestAddPolicyChecks(t *testing.T) {
 				{
 					Type:      "vulcan-trivy",
 					Target:    "git@github.com:adevinta/vulcan-local.git",
-					Options:   map[string]any{},
+					Options:   map[string]interface{}{},
 					AssetType: "GitRepository",
 				},
 			},
@@ -607,13 +607,13 @@ func TestAddAllChecks(t *testing.T) {
 				{
 					Type:      "vulcan-zap",
 					Target:    "git@github.com:adevinta/vulcan-local.git",
-					Options:   map[string]any{},
+					Options:   map[string]interface{}{},
 					AssetType: "GitRepository",
 				},
 				{
 					Type:      "vulcan-trivy",
 					Target:    "git@github.com:adevinta/vulcan-local.git",
-					Options:   map[string]any{},
+					Options:   map[string]interface{}{},
 					AssetType: "GitRepository",
 				},
 			},
@@ -628,7 +628,13 @@ func TestAddAllChecks(t *testing.T) {
 			if errToStr(err) != errToStr(tt.wantErr) {
 				t.Fatal(err)
 			}
-			diff := cmp.Diff(tt.cfg.Checks, tt.want)
+
+			sortCfgChecks := cmpopts.SortSlices(func(a config.Check, b config.Check) bool {
+				return a.Type < b.Type
+			})
+
+			diff := cmp.Diff(tt.cfg.Checks, tt.want, sortCfgChecks)
+
 			if diff != "" {
 				t.Errorf("%v\n", diff)
 			}
