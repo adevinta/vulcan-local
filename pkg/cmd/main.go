@@ -33,8 +33,30 @@ import (
 
 const defaultDockerHost = "host.docker.internal"
 
+type CommandRunner interface {
+	Run(string, string, ...string) error
+}
+
+type RealCommandRunner struct{}
+
+var commandRunner CommandRunner
+
+func (r RealCommandRunner) Run(command string, dependencyName string, args ...string) error {
+
+	var cmdOut bytes.Buffer
+
+	cmd := exec.Command(command, args...)
+	cmd.Stderr = &cmdOut
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("checking %s dependency bin=%s %w %s", dependencyName, command, err, cmdOut.String())
+	}
+	return nil
+}
+
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
+
+	commandRunner = RealCommandRunner{}
 
 	log.SetLevel(agentlog.ParseLogLevel(cfg.Conf.LogLevel.String()))
 

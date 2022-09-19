@@ -68,8 +68,10 @@ reporting:
     - summary: Leaked
     - affectedResource: libgcrypt
       target: .
+      description: "libgcrypt has a known and accepted vulnerability."
     - affectedResource: busybox
       target: .
+      description: "busybox is not relevant"
     - affectedResource: musl
       target: .
     - affectedResource: ncurses
