@@ -106,7 +106,7 @@ func checktypesFromJSON(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 }
 
 // checktypesFromCode returns the checktypes info defined as code in a
-// directory. We sopport two forms of repositories:
+// directory. We support two forms of repositories:
 // One that contains only one check. It's indicated by a path that points
 // directly to directory containing the check, for instance "./vulcan-dkim".
 // The other that can point to more that one check. It's indicated by a path

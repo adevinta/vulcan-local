@@ -121,7 +121,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		return config.ErrorExitCode, fmt.Errorf("unable to start results server %+v", err)
 	}
 	defer results.Shutdown()
-	log.Debug("Sendinf jobs to run")
+	log.Debug("Sending jobs to run")
 	err = generator.SendJobs(jobs, sqs.ArnChecks, sqs.Endpoint, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to send jobs to queue %+v", err)
