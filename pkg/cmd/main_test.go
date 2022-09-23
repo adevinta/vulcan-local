@@ -37,14 +37,15 @@ func init() {
 
 type TestCommandRunner struct{}
 
-func (r TestCommandRunner) Run(command string, dependencyName string, args ...string) error {
-
-	cs := []string{"-test.run=TestHelperProcess", "--"}
-	cs = append(cs, args...)
-	cmd := exec.Command(os.Args[0], cs...)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
-	err := cmd.Run()
-	return err
+// newExecCase returns a function for creating a command to execute the current test binary
+func newExecCase(test, state string) func(command string, args ...string) *exec.Cmd {
+	return func(command string, args ...string) *exec.Cmd {
+		cs := []string{"-test.run=" + test, "--", state, command}
+		cs = append(cs, args...)
+		cmd := exec.Command(os.Args[0], cs...)
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		return cmd
+	}
 }
 
 func TestHelperProcess(*testing.T) {
@@ -52,17 +53,64 @@ func TestHelperProcess(*testing.T) {
 		return
 	}
 	defer os.Exit(0)
-	fmt.Println("testing helper process")
+
+	args := []string{}
+	for i := range os.Args {
+		if os.Args[i] == "--" {
+			args = os.Args[i+1:]
+			break
+		}
+	}
+	// First argument is case and second the exec name.
+	if len(args) < 2 {
+		os.Exit(1)
+	}
+	cases := map[string]map[string]struct {
+		out  string
+		err  string
+		exit int
+	}{
+		"docker-git": {
+			"git":    {exit: 0, out: "version fake"},
+			"docker": {exit: 0},
+		},
+		"no-docker": {
+			"git":    {exit: 0},
+			"docker": {exit: 1},
+		},
+		"no-git": {
+			"git":    {exit: 1},
+			"docker": {exit: 0},
+		},
+		"other-git": {
+			"othergit": {exit: 0},
+			"docker":   {exit: 0},
+		},
+	}
+	c := args[0]
+	uc, ok := cases[c]
+	if !ok {
+		os.Exit(1)
+	}
+	exe, ok := uc[args[1]]
+	if !ok {
+		os.Exit(1)
+	}
+	if exe.out != "" {
+		fmt.Fprintln(os.Stdout, exe.out)
+	}
+	if exe.err != "" {
+		fmt.Fprintln(os.Stderr, exe.err)
+	}
+	os.Exit(exe.exit)
 }
 
 func TestCheckDependencies(t *testing.T) {
-	commandRunner = TestCommandRunner{}
-
 	tests := []struct {
 		name    string
 		cfg     *config.Config
-		want    interface{}
-		wantErr error
+		state   string
+		wantErr string
 	}{
 		{
 			name: "HappyPath",
@@ -76,16 +124,87 @@ func TestCheckDependencies(t *testing.T) {
 					Vars:        map[string]string{},
 				},
 			},
-			want:    nil,
-			wantErr: nil,
+			state:   "docker-git",
+			wantErr: "",
+		},
+		{
+			name: "no-docker",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					DockerBin:   "docker",
+					GitBin:      "git",
+					LogLevel:    logrus.InfoLevel,
+					Concurrency: 3,
+					IfName:      "docker0",
+					Vars:        map[string]string{},
+				},
+			},
+			state:   "no-docker",
+			wantErr: "docker",
+		},
+		{
+			name: "no-git",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					DockerBin:   "docker",
+					GitBin:      "git",
+					LogLevel:    logrus.InfoLevel,
+					Concurrency: 3,
+					IfName:      "docker0",
+					Vars:        map[string]string{},
+				},
+			},
+			state:   "no-git",
+			wantErr: "git",
+		},
+		{
+			name: "other-git-missing",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					DockerBin:   "docker",
+					GitBin:      "othergit",
+					LogLevel:    logrus.InfoLevel,
+					Concurrency: 3,
+					IfName:      "docker0",
+					Vars:        map[string]string{},
+				},
+			},
+			state:   "docker-git",
+			wantErr: "git",
+		},
+		{
+			name: "other-git-ok",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					DockerBin:   "docker",
+					GitBin:      "othergit",
+					LogLevel:    logrus.InfoLevel,
+					Concurrency: 3,
+					IfName:      "docker0",
+					Vars:        map[string]string{},
+				},
+			},
+			state:   "other-git",
+			wantErr: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			execCommand = newExecCase("TestHelperProcess", tt.state)
 			err := checkDependencies(tt.cfg, loggerUser)
-			if err != tt.wantErr {
-				t.Errorf("Unexcepcted error")
+			if err == nil {
+				if tt.wantErr != "" {
+					t.Errorf("Wanted error")
+				}
+			} else {
+				if tt.wantErr == "" {
+					t.Errorf("Unexpected error")
+				} else {
+					if !strings.Contains(err.Error(), tt.wantErr) {
+						t.Errorf("Unexpected error type")
+					}
+				}
 			}
 		})
 	}
@@ -220,7 +339,6 @@ func TestUpsertEnv(t *testing.T) {
 			if diff != "" {
 				t.Errorf("%v\n", diff)
 			}
-
 		})
 	}
 
