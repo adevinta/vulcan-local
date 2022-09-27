@@ -367,10 +367,12 @@ func GetHostIP(l agentlog.Logger) string {
 // report a warn if they are not
 func checkRequiredVariables(cfg *config.Config, log *logrus.Logger) {
 	for _, check := range cfg.Checks {
-		for _, requiredVar := range check.Checktype.RequiredVars {
-			if val, ok := cfg.Conf.Vars[requiredVar]; ok && len(val) == 0 || !ok {
-				log.Warnf("Missing required variable %s for the check %s and the target \"%s\". "+
-					"The check may fail or not be executed.", requiredVar, check.Checktype.Name, check.Target)
+		if check.Checktype != nil {
+			for _, requiredVar := range check.Checktype.RequiredVars {
+				if val, ok := cfg.Conf.Vars[requiredVar]; !ok || len(val) == 0 {
+					log.Warnf("Missing required variable %s for the check %s and the target \"%s\". "+
+						"The check may fail or not be executed.", requiredVar, check.Checktype.Name, check.Target)
+				}
 			}
 		}
 	}
