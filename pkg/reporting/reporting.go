@@ -32,7 +32,7 @@ func isExcluded(v *ExtendedVulnerability, ex *[]config.Exclusion) bool {
 }
 
 func updateReport(e *ExtendedVulnerability, c *config.Check) {
-	if c.NewTarget == "" || c.NewTarget != c.Target {
+	if c.NewTarget == "" || c.NewTarget == c.Target {
 		return
 	}
 	e.Target = c.Target
