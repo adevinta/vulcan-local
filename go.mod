@@ -1,6 +1,6 @@
 module github.com/adevinta/vulcan-local
 
-go 1.18
+go 1.19
 
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
