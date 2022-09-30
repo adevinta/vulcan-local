@@ -316,7 +316,6 @@ func TestUpsertEnv(t *testing.T) {
 		varName  string
 		newValue string
 		want     []string
-		wantErr  error
 	}{
 		{
 			name: "HappyPath",
@@ -328,7 +327,6 @@ func TestUpsertEnv(t *testing.T) {
 			want: []string{
 				"a=c", "b=b",
 			},
-			wantErr: nil,
 		},
 	}
 
