@@ -328,6 +328,15 @@ func TestUpsertEnv(t *testing.T) {
 				"a=c", "b=b",
 			},
 		},
+		{
+			name:     "Insert variable",
+			envs:     []string{},
+			varName:  "a",
+			newValue: "c",
+			want: []string{
+				"a=c",
+			},
+		},
 	}
 
 	for _, tt := range tests {
