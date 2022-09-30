@@ -165,6 +165,7 @@ func TestGenerateJobs(t *testing.T) {
 		wantErr error
 	}{
 		{
+			name: "HappyPath",
 			cfg: &config.Config{
 				CheckTypes: map[config.ChecktypeRef]config.Checktype{
 					"vulcan-trivy": {
@@ -172,6 +173,58 @@ func TestGenerateJobs(t *testing.T) {
 					},
 				},
 				Checks: []config.Check{
+					{
+						Type:      "vulcan-trivy",
+						Target:    "git@github.com:adevinta/vulcan-local.git",
+						AssetType: "GitRepository",
+					},
+				},
+			},
+			want: []jobrunner.Job{
+				{
+					Target:    "git@github.com:adevinta/vulcan-local.git",
+					AssetType: "GitRepository",
+					Options:   "{}",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Exclude Trivy",
+			cfg: &config.Config{
+				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+					"vulcan-trivy": {
+						Name: "vulcan-trivy",
+					},
+				},
+				Checks: []config.Check{
+					{
+						Type:      "vulcan-trivy",
+						Target:    "git@github.com:adevinta/vulcan-local.git",
+						AssetType: "GitRepository",
+					},
+				},
+				Conf: config.Conf{
+					ExcludeR: func() *regexp.Regexp { regex, _ := regexp.Compile("trivy"); return regex }(),
+				},
+			},
+			want:    []jobrunner.Job{},
+			wantErr: nil,
+		},
+		{
+			name: "Duplicated check",
+			cfg: &config.Config{
+				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+					"vulcan-trivy": {
+						Name: "vulcan-trivy",
+					},
+				},
+				Checks: []config.Check{
+					{
+						Type:      "vulcan-trivy",
+						Target:    "git@github.com:adevinta/vulcan-local.git",
+						AssetType: "GitRepository",
+					},
 					{
 						Type:      "vulcan-trivy",
 						Target:    "git@github.com:adevinta/vulcan-local.git",
