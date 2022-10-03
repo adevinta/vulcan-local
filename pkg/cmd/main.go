@@ -33,6 +33,8 @@ import (
 
 const defaultDockerHost = "host.docker.internal"
 
+var execCommand = exec.Command
+
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
 
@@ -285,14 +287,14 @@ func checkDependencies(cfg *config.Config, log agentlog.Logger) error {
 	var cmdOut bytes.Buffer
 
 	log.Debugf("Checking dependency docker=%s", cfg.Conf.DockerBin)
-	cmd := exec.Command(cfg.Conf.DockerBin, "ps", "-q")
+	cmd := execCommand(cfg.Conf.DockerBin, "ps", "-q")
 	cmd.Stderr = &cmdOut
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("checking docker dependency bin=%s %w %s", cfg.Conf.DockerBin, err, cmdOut.String())
 	}
 
 	log.Debugf("Checking dependency git=%s", cfg.Conf.GitBin)
-	cmd = exec.Command(cfg.Conf.GitBin, "version")
+	cmd = execCommand(cfg.Conf.GitBin, "version")
 	cmd.Stderr = &cmdOut
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("checking git dependency bin=%s %w %s", cfg.Conf.GitBin, err, cmdOut.String())
