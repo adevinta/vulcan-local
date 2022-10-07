@@ -7,7 +7,6 @@ package reporting
 import (
 	"bytes"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/adevinta/vulcan-agent/log"
@@ -105,14 +104,9 @@ func printVulnerability(v *ExtendedVulnerability, l log.Logger) string {
 				fmt.Fprintf(buf, "\n\n%s", formatString(r.Name+":", 0))
 				count := 0
 				for _, rs := range r.Rows {
-					ks := make([]string, 0, len(rs))
-					for k := range rs {
-						ks = append(ks, k)
-					}
-					sort.Strings(ks)
-					for _, k := range ks {
-						if len(rs[k]) != 0 {
-							ts := splitLines(rs[k], baseIndent, Width-baseIndent-len(k)-2)
+					for _, k := range r.Header {
+						if val, ok := rs[k]; ok && len(val) > 0 {
+							ts := splitLines(val, baseIndent, Width-baseIndent-len(k)-2)
 							fmt.Fprintf(buf, "\n%s%s: %s", indentate(baseIndent), formatString(k, 0), strings.Join(ts, "\n"+indentate(baseIndent+len(k)+2)))
 						}
 					}
