@@ -146,7 +146,7 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 		return []config.Target{a}, nil
 	}
 
-	if _, err := GetValidGitDirectory(identifier); err == nil {
+	if _, err := GetValidDirectory(identifier); err == nil {
 		a.AssetType = "GitRepository"
 		return []config.Target{a}, nil
 	}
@@ -356,18 +356,6 @@ func filterChecktype(name string, include, exclude *regexp.Regexp) bool {
 		return false
 	}
 	return true
-}
-
-func GetValidGitDirectory(path string) (string, error) {
-	path, err := GetValidDirectory(path)
-	if err != nil {
-		return "", err
-	}
-	_, err = GetValidDirectory(filepath.Join(path, ".git"))
-	if err != nil {
-		return "", err
-	}
-	return path, nil
 }
 
 func GetValidDirectory(path string) (string, error) {

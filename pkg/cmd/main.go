@@ -196,7 +196,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, backend.CheckAssetTypeVar, "LocalDockerImage")
 		} else if params.AssetType == "GitRepository" {
 
-			if path, err := generator.GetValidGitDirectory(params.Target); err == nil {
+			if path, err := generator.GetValidDirectory(params.Target); err == nil {
 				port, err := gs.AddGit(path)
 				if err != nil {
 					log.Errorf("Unable to create local git server check %v", err)
