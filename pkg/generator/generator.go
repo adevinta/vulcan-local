@@ -15,22 +15,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/adevinta/vulcan-agent/jobrunner"
 	"github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-agent/queue/sqs"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	types "github.com/adevinta/vulcan-types"
-	"github.com/google/uuid"
 )
-
-func getCheckType(cfg *config.Config, checkTypeRef config.ChecktypeRef) (*config.Checktype, error) {
-	if ct, ok := cfg.CheckTypes[checkTypeRef]; ok {
-		return &ct, nil
-	} else {
-		return nil, fmt.Errorf("unable to find checktype ref %s", checkTypeRef)
-	}
-}
 
 // mergeOptions takes two check options.
 func mergeOptions(optsA map[string]interface{}, optsB map[string]interface{}) map[string]interface{} {
@@ -44,7 +38,7 @@ func mergeOptions(optsA map[string]interface{}, optsB map[string]interface{}) ma
 	return merged
 }
 
-// buildOptions generates a string encoded
+// buildOptions encodes the given options as json.
 func buildOptions(options map[string]interface{}) (string, error) {
 	if options == nil {
 		return "{}", nil
@@ -60,10 +54,12 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 	unique := map[string]*config.Check{}
 
 	jobs := []jobrunner.Job{}
+	cts := cfg.CheckTypes
 	for i := range cfg.Checks {
 		// Because We want to update the original Check
 		c := &cfg.Checks[i]
-		ch, err := getCheckType(cfg, c.Type)
+
+		ch, err := cts.Checktype(c.Type)
 		if err != nil {
 			l.Errorf("Skipping check - %s", err)
 			continue
@@ -72,6 +68,14 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 		if !filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
 			l.Debugf("Skipping filtered check=%s", ch.Name)
 			continue
+		}
+		if code, ok := checktypes.ParseCode(ch.Image); ok {
+			image, err := code.Build(l)
+			if err != nil {
+				return nil, err
+			}
+			l.Debugf("using image %s for checktype %s", image, ch.Name)
+			ch.Image = image
 		}
 
 		ops, err := buildOptions(c.Options)
@@ -221,14 +225,14 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 	return targets, nil
 }
 
-// GenerateChecksFromTargets expands the list of targets by inferring missing AssetTypes
+// ComputeTargets expands the list of targets by inferring missing AssetTypes
 // and generates the list of checks to run based on the available Checktypes and AssetType.
 func ComputeTargets(cfg *config.Config, l log.Logger) error {
-	// Generate a new list of Targets with AssetType
+	// Generate a new list of Targets with AssetType.
 	expandedTargets := []config.Target{}
 	for _, t := range cfg.Targets {
 		if t.AssetType == "" {
-			// Try to infer the asset type
+			// Try to infer the asset type.
 			if inferredTargets, err := getTypesFromIdentifier(t); err != nil {
 				l.Errorf("skipping target %s unable to infer assetType %+v", t.Target, err)
 				continue
@@ -255,6 +259,7 @@ func ComputeTargets(cfg *config.Config, l log.Logger) error {
 			uniq[f] = nil
 		}
 	}
+	l.Debugf("Targets computed %+v", dedupTargets)
 	cfg.Targets = dedupTargets
 	return nil
 }
@@ -303,8 +308,8 @@ func AddPolicyChecks(cfg *config.Config, l log.Logger) error {
 	return nil
 }
 
-// This function is called if no policy has been set, and creates a list of checks to run based on targets and
-// available checks.
+// AddAllChecks is called if no policy has been set, and creates a list of
+// checks to run based on targets and available checks.
 func AddAllChecks(cfg *config.Config, l log.Logger) error {
 	checks := []config.Check{}
 	for _, t := range cfg.Targets {
@@ -329,6 +334,7 @@ func AddAllChecks(cfg *config.Config, l log.Logger) error {
 		c.Options = mergeOptions(c.Options, ct.Options) // Merge check options with checktype options.
 	}
 	cfg.Checks = append(cfg.Checks, checks...)
+	l.Debugf("checks added %d", len(cfg.Checks))
 	return nil
 }
 
@@ -343,6 +349,7 @@ func SendJobs(jobs []jobrunner.Job, arn, endpoint string, l log.Logger) error {
 		if err != nil {
 			return err
 		}
+		l.Debugf("Jobs %s %s sent", job.Image, job.Target)
 		qw.Write(string(bytes))
 	}
 	return nil

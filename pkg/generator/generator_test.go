@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/adevinta/vulcan-agent/jobrunner"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	"github.com/adevinta/vulcan-local/pkg/testutil"
@@ -45,33 +46,29 @@ func TestGetCheckType(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		cfg          config.Config
-		checkTypeRef config.ChecktypeRef
-		want         *config.Checktype
+		ct           checktypes.Checktypes
+		checkTypeRef checktypes.ChecktypeRef
+		want         *checktypes.Checktype
 		wantErr      error
 	}{
 		{
 			name: "HappyPath",
-			cfg: config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
-					"vulcan-zap": {
-						Name: "vulcan-zap",
-					},
+			ct: checktypes.Checktypes{
+				"vulcan-zap": {
+					Name: "vulcan-zap",
 				},
 			},
 			checkTypeRef: "vulcan-zap",
-			want: &config.Checktype{
+			want: &checktypes.Checktype{
 				Name: "vulcan-zap",
 			},
 			wantErr: nil,
 		},
 		{
 			name: "CheckNotFound",
-			cfg: config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
-					"vulcan-zap": {
-						Name: "vulcan-zap",
-					},
+			ct: checktypes.Checktypes{
+				"vulcan-zap": {
+					Name: "vulcan-zap",
 				},
 			},
 			checkTypeRef: "vulcan-trivy",
@@ -82,7 +79,7 @@ func TestGetCheckType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := getCheckType(&tt.cfg, tt.checkTypeRef)
+			got, err := tt.ct.Checktype(tt.checkTypeRef)
 			if errToStr(err) != errToStr(tt.wantErr) {
 				t.Fatal(err)
 			}
@@ -167,7 +164,7 @@ func TestGenerateJobs(t *testing.T) {
 		{
 			name: "HappyPath",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-trivy": {
 						Name: "vulcan-trivy",
 					},
@@ -192,7 +189,7 @@ func TestGenerateJobs(t *testing.T) {
 		{
 			name: "Exclude Trivy",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-trivy": {
 						Name: "vulcan-trivy",
 					},
@@ -214,7 +211,7 @@ func TestGenerateJobs(t *testing.T) {
 		{
 			name: "Duplicated check",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-trivy": {
 						Name: "vulcan-trivy",
 					},
@@ -514,7 +511,7 @@ func TestComputeTargets(t *testing.T) {
 		{
 			name: "HappyPath",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-zap": {
 						Name: "vulcan-zap",
 					},
@@ -536,7 +533,7 @@ func TestComputeTargets(t *testing.T) {
 		{
 			name: "DuplicatedTargets",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-zap": {
 						Name: "vulcan-zap",
 					},
@@ -588,7 +585,7 @@ func TestAddPolicyChecks(t *testing.T) {
 				Conf: config.Conf{
 					Policy: "lightweight",
 				},
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-zap": {
 						Name:   "vulcan-zap",
 						Assets: []string{"GitRepository"},
@@ -652,7 +649,7 @@ func TestAddAllChecks(t *testing.T) {
 		{
 			name: "HappyPath",
 			cfg: &config.Config{
-				CheckTypes: map[config.ChecktypeRef]config.Checktype{
+				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-zap": {
 						Name:   "vulcan-zap",
 						Assets: []string{"GitRepository"},
