@@ -175,14 +175,14 @@ vulcan-local -t .
 
 ### Running local checks
 
-vulcan-local can run checks which code is stored locally, to do so the schema
-``code://`` must be used when specifying the checktypes to run. For instance,
-the following command runs the ``vulcan-tls`` check, by building and running
-the code and the docker image in the directory ``vulcan-checks/cmd/vulcan-tls``
-against the hostname: ``example.com``
+vulcan-local can run checks which code is stored locally, to do so point the
+checktypes param to a directory containing the code of the checktypes to run.
+For instance, the following command runs the ``vulcan-tls`` check, by building
+and running the code and the docker image in the directory
+``vulcan-checks/cmd/vulcan-tls`` against the hostname: ``example.com``
 
 ```bash
-vulcan-local -checktypes "code://./vulcan-checks/cmd/vulcan-tls" -t example.com\
+vulcan-local -checktypes "./vulcan-checks/cmd/vulcan-tls" -t example.com\
   -a Hostname -l debug
 ```
 

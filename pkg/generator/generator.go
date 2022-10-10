@@ -64,6 +64,11 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			l.Errorf("Skipping check - %s", err)
 			continue
 		}
+
+		if !filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
+			l.Debugf("Skipping filtered check=%s", ch.Name)
+			continue
+		}
 		if code, ok := checktypes.ParseCode(ch.Image); ok {
 			image, err := code.Build(l)
 			if err != nil {
@@ -71,10 +76,6 @@ func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitS
 			}
 			l.Debugf("using image %s for checktype %s", image, ch.Name)
 			ch.Image = image
-		}
-		if !filterChecktype(ch.Name, cfg.Conf.IncludeR, cfg.Conf.ExcludeR) {
-			l.Debugf("Skipping filtered check=%s", ch.Name)
-			continue
 		}
 
 		ops, err := buildOptions(c.Options)

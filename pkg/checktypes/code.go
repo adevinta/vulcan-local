@@ -86,7 +86,7 @@ func (c Code) isModified(logger log.Logger) (bool, error) {
 	}
 	imageTimeS, ok := labels[modifTimeLabel]
 	if !ok {
-		logger.Infof("Image %s is does not contain the label %s", c.imageName(), modifTimeLabel)
+		logger.Infof("Image %s does not contain the label %s", c.imageName(), modifTimeLabel)
 		return true, nil
 	}
 	_, err = time.Parse(time.RFC822, imageTimeS)

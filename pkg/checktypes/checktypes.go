@@ -13,7 +13,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/adevinta/vulcan-agent/log"
 
@@ -79,10 +78,23 @@ func Import(repos []string, l log.Logger) (map[ChecktypeRef]Checktype, error) {
 }
 
 func checktypesFrom(u *neturl.URL, l log.Logger) ([]Checktype, error) {
-	if u.Scheme == "code" {
+	code, err := isChecktypeCode(u)
+	if err != nil {
+		return nil, err
+	}
+	if code {
 		return checktypesFromCode(u, l)
 	}
 	return checktypesFromJSON(u, l)
+}
+
+func isChecktypeCode(u *neturl.URL) (bool, error) {
+	path := u.String()
+	dirInfo, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	return dirInfo.IsDir(), nil
 }
 
 func checktypesFromJSON(u *neturl.URL, l log.Logger) ([]Checktype, error) {
@@ -113,7 +125,7 @@ func checktypesFromJSON(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 // pointing to the a directory that has one or more subdirectories containing
 // the code of the checks, for instance path: "./cmd/checks".
 func checktypesFromCode(u *neturl.URL, l log.Logger) ([]Checktype, error) {
-	path := strings.TrimPrefix(u.String(), "code://")
+	path := u.String()
 	l.Debugf("Loading checktypes from code in: %s", path)
 	dirInfo, err := os.Stat(path)
 	if err != nil {
