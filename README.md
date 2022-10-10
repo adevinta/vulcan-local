@@ -215,6 +215,38 @@ reporting:
       target: latest
     - fingerprint: 7820aa24a96f0fcd4717933772a8bc89552a0c1509f3d90b14d885d25e60595f
 ```
+## Github action Usage
+
+Using master:
+```
+- use: adevinta/vulcan-local/action@master
+```
+
+Using specific release (starting at v0.1.6):
+```
+- use: adevinta/vulcan-local/action@v0.1.6
+```
+By default are in only repository mode
+
+Options:
+```
+- use: adevinta/vulcan-local/action@v0.1.6
+  with:
+    # only repository mode. default: true
+    only-repository: ''
+    # checktypes url, works with only repository mode. default: 
+    # https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json
+    checktypes: ''
+    # config file path. default: vulcan.yaml
+    config-file: ''
+    # log level. default: info
+    log-level:
+      description: 'Log level'
+      required: false
+      default: "info"
+    # other options. View with vulcan-local -h
+    other-options:
+```
 
 ## Docker usage
 

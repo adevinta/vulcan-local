@@ -1,0 +1,36 @@
+name: 'Vulcan Local Action'
+description: 'Vulcan Local Action'
+inputs:
+  config-file:
+    description: 'Config file'
+    required: false
+    default: "vulcan.yaml"
+  log-level:
+    description: 'Log level'
+    required: false
+    default: "info"
+  only-repository:
+    description: 'Only repository mode'
+    required: false
+    default: "true"
+  checktypes:
+    description: 'Checktypes url for Only repository mode'
+    required: false
+    default: "https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"
+  other-options:
+    description: 'Other options to add'
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - run: curl -sfL curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- --version v0.1.6
+      shell: bash
+    - id: vulcan-local-run-only-repository
+      if: ${{ inputs.only-repository == 'true' }}
+      run: vulcan-local -t . -checktypes ${{ inputs.checktypes }} -l ${{ inputs.log-level}} ${{ inputs.other-options }}
+      shell: bash
+    - id: vulcan-local-run
+      if: ${{ inputs.only-repository == 'false' }}
+      run: vulcan-local -c ${{ inputs.config-file }} -l ${{ inputs.log-level}} ${{ inputs.other-options }}
+      shell: bash
