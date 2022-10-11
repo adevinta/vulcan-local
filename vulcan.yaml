@@ -61,7 +61,6 @@ checks:
     target: appsecco/dsvw:latest
 
 reporting:
-  format: json
   # Valid values CRITICAL, *HIGH*, MEDIUM, LOW, INFO (default HIGH)
   severity: HIGH
   exclusions:

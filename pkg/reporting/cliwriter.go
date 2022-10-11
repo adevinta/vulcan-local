@@ -29,10 +29,10 @@ type ExtendedVulnerability struct {
 	Excluded bool
 }
 
-func summaryTable(s []ExtendedVulnerability, l log.Logger) {
+func summaryTable(s []ExtendedVulnerability, l log.Logger) string {
 	if len(s) == 0 {
 		l.Infof("No vulnerabilities found during the last scan")
-		return
+		return ""
 	}
 	data := make(map[config.Severity]int)
 	excluded := 0
@@ -57,7 +57,8 @@ func summaryTable(s []ExtendedVulnerability, l log.Logger) {
 		fmt.Fprintf(buf, "\nNumber of excluded vulnerabilities: %d\n", excluded)
 	}
 	fmt.Fprint(buf, "\n")
-	l.Infof(buf.String())
+
+	return buf.String()
 }
 
 func printVulnerability(v *ExtendedVulnerability, l log.Logger) string {

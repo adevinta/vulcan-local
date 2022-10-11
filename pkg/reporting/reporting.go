@@ -180,8 +180,18 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 }
 
 func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) (int, error) {
-	if cfg.Reporting.Format != "json" {
-		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
+	output := os.Stdout
+	if cfg.Reporting.OutputFile != "" && cfg.Reporting.OutputFile != "-" {
+		dir := filepath.Dir(cfg.Reporting.OutputFile)
+		err := os.MkdirAll(dir, 0o744)
+		if err != nil {
+			return config.ErrorExitCode, fmt.Errorf("failed to create directory %s: %s", dir, err)
+		}
+		output, err = os.OpenFile(cfg.Reporting.OutputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+		if err != nil {
+			return config.ErrorExitCode, fmt.Errorf("unable to open report file %s %+v", cfg.Reporting.OutputFile, err)
+		}
+		defer output.Close()
 	}
 
 	checkExclusionDescriptions(cfg, l)
@@ -190,14 +200,10 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 
 	requested := cfg.Reporting.Severity.Data()
 
-	// Print results when no output file is set
 	vs := parseReports(results.Checks, cfg, l)
 
-	// Print summary table
-	summaryTable(vs, l)
-
-	outputFile := cfg.Reporting.OutputFile
-	if outputFile != "" {
+	// TODO: Unify filtering for all the formats.
+	if cfg.Reporting.Format == "json" {
 		// TODO: Decide if we want to keep filtering JSON output by threshold and exclusion
 		// Recreates the original report map filtering the Excluded and Threshold
 		// json: Just print the reports as an slice
@@ -214,37 +220,24 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 				r.Vulnerabilities = append(r.Vulnerabilities, *(e.Vulnerability))
 			}
 		}
-		str, _ := json.Marshal(slice)
-		if outputFile == "-" {
-			fmt.Fprint(os.Stderr, string(str))
-		} else {
-			dir := filepath.Dir(outputFile)
-			err := os.MkdirAll(dir, 0o744)
-			if err != nil {
-				return config.ErrorExitCode, fmt.Errorf("failed to create directory %s: %s", dir, err)
-			}
-			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-			if err != nil {
-				return config.ErrorExitCode, fmt.Errorf("unable to open report file %s %+v", outputFile, err)
-			}
-			defer f.Close()
-			if _, err := f.Write(str); err != nil {
-				return config.ErrorExitCode, fmt.Errorf("unable to write report file %s %+v", outputFile, err)
+		str, _ := json.MarshalIndent(slice, "", "  ")
+		fmt.Fprint(output, string(str))
+	} else if cfg.Reporting.Format == "report" {
+		var sb strings.Builder
+		for _, s := range config.Severities() {
+			sd := s.Data()
+			for _, v := range vs {
+				if v.Severity.Name == sd.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
+					sb.WriteString(printVulnerability(&v, l))
+				}
 			}
 		}
-	}
-
-	var rs string
-	for _, s := range config.Severities() {
-		sd := s.Data()
-		for _, v := range vs {
-			if v.Severity.Name == sd.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
-				rs = fmt.Sprintf("%s%s", rs, printVulnerability(&v, l))
-			}
-		}
-	}
-	if len(rs) > 0 {
-		l.Infof("\nVulnerabilities details:\n%s", rs)
+		// Print summary table
+		fmt.Fprint(output, summaryTable(vs, l))
+		fmt.Fprint(output, sb.String())
+	} else {
+		// TODO: Create an enum and validate on command parsing.
+		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
 	}
 
 	// Get max reported score in vulnerabilities

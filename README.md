@@ -101,6 +101,8 @@ Usage of vulcan-local:
     	docker binary (default "docker")
   -e string
     	exclude checktype regex
+  -f string
+    	output format (eg report, json) (default "report")
   -git string
     	git binary (default "git")
   -h	print usage
@@ -117,13 +119,14 @@ Usage of vulcan-local:
   -pullpolicy value
     	when to pull for check images [Always IfNotPresent Never] (Default "IfNotPresent")
   -r string
-    	results file (eg results.json)
+    	results file, defaults to stdout (eg results.json)
   -s value
     	filter by severity [CRITICAL HIGH MEDIUM LOW INFO] (Default "HIGH")
   -t value
     	target to scan (eg .)
   -version
     	print version
+
 ```
 
 Exit codes:
