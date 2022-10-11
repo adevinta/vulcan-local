@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/adevinta/vulcan-agent/log"
 
@@ -60,6 +61,11 @@ type JSONChecktypes struct {
 func Import(repos []string, l log.Logger) (map[ChecktypeRef]Checktype, error) {
 	var checktypes = make(map[ChecktypeRef]Checktype)
 	for _, repo := range repos {
+		if strings.HasPrefix(repo, "file://") {
+			l.Infof("Removing 'file://' from %s. This support will be deprecated in future versions", repo)
+			repo = strings.TrimPrefix(repo, "file://")
+		}
+
 		l.Debugf("Importing checktypes from: %s", repo)
 		repoURL, err := neturl.Parse(repo)
 		if err != nil {
@@ -89,8 +95,10 @@ func checktypesFrom(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 }
 
 func isChecktypeCode(u *neturl.URL) (bool, error) {
-	path := u.String()
-	dirInfo, err := os.Stat(path)
+	if u.Scheme != "" {
+		return false, nil
+	}
+	dirInfo, err := os.Stat(u.String())
 	if err != nil {
 		return false, err
 	}
@@ -102,19 +110,13 @@ func checktypesFromJSON(u *neturl.URL, l log.Logger) ([]Checktype, error) {
 	if err != nil {
 		return nil, err
 	}
-	jchecktypes := struct {
-		Checktypes []Checktype `json:"checktypes"`
-	}{}
+	jchecktypes := JSONChecktypes{}
 	err = json.Unmarshal(content, &jchecktypes)
 	if err != nil {
 		return nil, err
 	}
-	var checktypes = make([]Checktype, len(jchecktypes.Checktypes))
-	for _, c := range jchecktypes.Checktypes {
-		checktypes = append(checktypes, c)
-	}
 	l.Debugf("Loaded checktypes info from url=%s, number of checktypes loaded=%d", u.String(), len(jchecktypes.Checktypes))
-	return checktypes, nil
+	return jchecktypes.Checktypes, nil
 }
 
 // checktypesFromCode returns the checktypes info defined as code in a

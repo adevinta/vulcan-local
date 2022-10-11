@@ -55,7 +55,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			return config.ErrorExitCode, fmt.Errorf("invalid exclude regexp: %w", err)
 		}
 	}
-	log.Debugf("Importing checktypes from: %+v", cfg.Conf.Repositories)
 	checktypes, err := checktypes.Import(cfg.Conf.Repositories, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to load repositories: %w", err)
