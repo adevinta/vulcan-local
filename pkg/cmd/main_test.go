@@ -5,7 +5,6 @@ Copyright 2022 Adevinta
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	agentlog "github.com/adevinta/vulcan-agent/log"
-	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
@@ -207,105 +204,6 @@ func TestCheckDependencies(t *testing.T) {
 					}
 				}
 			}
-		})
-	}
-
-}
-
-func TestCheckRequiredVariables(t *testing.T) {
-
-	buf := bytes.Buffer{}
-	loggerUser.SetOutput(&buf)
-
-	defer func() {
-		loggerUser.SetOutput(os.Stderr)
-	}()
-
-	tests := []struct {
-		name    string
-		cfg     *config.Config
-		want    []string
-		wantErr error
-	}{
-		{
-			name: "HappyPath",
-			cfg: &config.Config{
-				Conf: config.Conf{
-					Vars: map[string]string{
-						"A": "a",
-						"B": "b",
-						"C": "c",
-					},
-				},
-				Checks: []config.Check{
-					{
-						Checktype: &checktypes.Checktype{
-							RequiredVars: []string{"A", "B", "C"},
-						},
-					},
-				},
-			},
-			want:    []string{""},
-			wantErr: nil,
-		},
-		{
-			name: "Missing one Variable",
-			cfg: &config.Config{
-				Conf: config.Conf{
-					LogLevel: logrus.InfoLevel,
-					Vars: map[string]string{
-						"A": "a",
-						"B": "b",
-					},
-				},
-				Checks: []config.Check{
-					{
-						Checktype: &checktypes.Checktype{
-							RequiredVars: []string{"A", "B", "C"},
-						},
-					},
-				},
-			},
-			want:    []string{"Missing required variable C for the check"},
-			wantErr: nil,
-		},
-		{
-			name: "Missing two Variable",
-			cfg: &config.Config{
-				Conf: config.Conf{
-					LogLevel: logrus.InfoLevel,
-					Vars: map[string]string{
-						"A": "a",
-					},
-				},
-				Checks: []config.Check{
-					{
-						Checktype: &checktypes.Checktype{
-							RequiredVars: []string{"A", "B", "C"},
-						},
-					},
-				},
-			},
-			want: []string{
-				"Missing required variable B for the check",
-				"Missing required variable C for the check"},
-			wantErr: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
-			loggerUser.SetLevel(agentlog.ParseLogLevel(tt.cfg.Conf.LogLevel.String()))
-
-			checkRequiredVariables(tt.cfg, loggerUser)
-			got := buf.String()
-			for _, want := range tt.want {
-				if !strings.Contains(got, want) {
-					t.Errorf("Wanted %s, got %s", tt.want, got)
-				}
-			}
-			buf.Reset()
 		})
 	}
 }

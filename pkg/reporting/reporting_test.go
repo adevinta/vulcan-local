@@ -4,10 +4,14 @@ Copyright 2022 Adevinta
 package reporting
 
 import (
+	"bytes"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	agentlog "github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	report "github.com/adevinta/vulcan-report"
 	"github.com/google/go-cmp/cmp"
@@ -115,17 +119,44 @@ func TestIsExcluded(t *testing.T) {
 }
 
 func TestParseReports(t *testing.T) {
+	buf := bytes.Buffer{}
+	loggerUser.SetOutput(&buf)
 	tests := []struct {
-		name    string
-		reports map[string]*report.Report
-		cfg     *config.Config
-		want    []ExtendedVulnerability
-		wantErr error
+		name        string
+		reports     map[string]*report.Report
+		cfg         *config.Config
+		want        []ExtendedVulnerability
+		wantLog     string
+		dontWantLog string
 	}{
 		{
 			name: "HappyPath",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "FINISHED",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"OPTVAR"},
+						},
+					},
+					{
+						Id:        "FAILED",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"REQVAR"},
+						},
+					},
+				},
+			},
 			reports: map[string]*report.Report{
-				"12345": {
+				"FINISHED": {
 					CheckData: report.CheckData{
 						ChecktypeName:    "vulcan-trivy",
 						ChecktypeVersion: "latest",
@@ -133,19 +164,7 @@ func TestParseReports(t *testing.T) {
 						Target:           "appsecco/dsvw:latest",
 					},
 					ResultData: report.ResultData{
-						Vulnerabilities: []report.Vulnerability{
-							{ID: ""},
-						},
-					},
-				},
-			},
-			cfg: &config.Config{
-				Checks: []config.Check{
-					{
-						Type:      "vulcan-trivy",
-						Target:    "appsecco/dsvw:latest",
-						AssetType: "DockerImage",
-						NewTarget: "",
+						Vulnerabilities: []report.Vulnerability{{ID: "foo"}},
 					},
 				},
 			},
@@ -157,32 +176,31 @@ func TestParseReports(t *testing.T) {
 						Status:           "FINISHED",
 						Target:           "appsecco/dsvw:latest",
 					},
-					Vulnerability: &report.Vulnerability{
-						ID: "",
-					},
-					Severity: &config.SeverityData{
-						Severity:  config.SeverityInfo,
-						Name:      "INFO",
-						Threshold: 0,
-						Exit:      config.SuccessExitCode,
-						Color:     36, // Light blue
-					},
-					Excluded: false,
+					Vulnerability: &report.Vulnerability{ID: "foo"},
+					Severity:      config.SeverityInfo.Data(),
+					Excluded:      false,
 				},
 			},
-			wantErr: nil,
+			wantLog:     "REQVAR", // If the check fails and the variable was set a log is expected.
+			dontWantLog: "OPTVAR", // If the check finishes we don't expect a log.
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
+			loggerUser.SetLevel(agentlog.ParseLogLevel("INFO"))
 			got := parseReports(tt.reports, tt.cfg, loggerUser)
-
 			diff := cmp.Diff(got, tt.want)
 			if diff != "" {
 				t.Errorf("%v\n", diff)
 			}
+			if tt.wantLog != "" && !strings.Contains(buf.String(), tt.wantLog) {
+				t.Errorf("Missing log %s", tt.wantLog)
+			}
+			if tt.dontWantLog != "" && strings.Contains(buf.String(), tt.dontWantLog) {
+				t.Errorf("Unexpected log %s", tt.wantLog)
+			}
+			buf.Reset()
 		})
 	}
 

@@ -55,7 +55,33 @@ func updateReport(e *ExtendedVulnerability, c *config.Check) {
 
 func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.Logger) []ExtendedVulnerability {
 	vulns := []ExtendedVulnerability{}
-	for _, r := range reports {
+
+	for _, check := range cfg.Checks {
+		// The check was filtered
+		if check.Id == "" {
+			continue
+		}
+
+		// See if the check received a report
+		r, ok := reports[check.Id]
+
+		// Write a log in case of failure and a missing req variable
+		if !ok || r.Status != "FINISHED" {
+			lv := []string{}
+			for _, requiredVar := range check.Checktype.RequiredVars {
+				if val, ok := cfg.Conf.Vars[requiredVar]; !ok || len(val) == 0 {
+					lv = append(lv, requiredVar)
+				}
+			}
+			if len(lv) > 0 {
+				l.Errorf("Check %s on %s failed and variables where missing %v", check.Checktype.Name, check.Target, lv)
+			}
+		}
+
+		if !ok {
+			continue
+		}
+
 		for i := range r.Vulnerabilities {
 			v := r.Vulnerabilities[i]
 			extended := ExtendedVulnerability{
@@ -63,12 +89,7 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 				Vulnerability: &v,
 				Severity:      config.FindSeverityByScore(v.Score).Data(),
 			}
-			for _, s := range cfg.Checks {
-				if s.Id == r.CheckID {
-					updateReport(&extended, &s)
-					break
-				}
-			}
+			updateReport(&extended, &check)
 			extended.Excluded = isExcluded(&extended, &cfg.Reporting.Exclusions)
 			vulns = append(vulns, extended)
 		}
