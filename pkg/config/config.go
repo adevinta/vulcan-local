@@ -9,6 +9,7 @@ import (
 	neturl "net/url"
 	"reflect"
 	"regexp"
+	"strings"
 
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	"github.com/adevinta/vulcan-agent/log"
@@ -216,6 +217,11 @@ func FindSeverityByScore(score float32) Severity {
 }
 
 func ReadConfig(url string, cfg *Config, l log.Logger) error {
+	if strings.HasPrefix(url, "file://") {
+		l.Infof("Removing 'file://' from %s. This support will be deprecated in future versions", url)
+		url = strings.TrimPrefix(url, "file://")
+	}
+
 	u, err := neturl.Parse(url)
 	if err != nil {
 		return err

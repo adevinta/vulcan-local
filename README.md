@@ -57,7 +57,7 @@ This is a very simple config file with two checks:
 ```yaml
 conf:
   repositories:
-    - file://./script/checktypes-stable.json
+    - ./script/checktypes-stable.json
 
 # List of targets to scan generating checks from all available checktypes
 targets:
@@ -152,10 +152,10 @@ cat ~/my_password.txt | docker login --username foo --password-stdin private.reg
 Scan a single asset with all the checkTypes that apply
 
 ```sh
-vulcan-local -t http://localhost:1234 -i exposed -checktypes file://./script/checktypes-stable.json
+vulcan-local -t http://localhost:1234 -i exposed -checktypes ./script/checktypes-stable.json
 
 # Set VULCAN_CHECKTYPES as the default checktypes uri (-checktypes flag)
-export VULCAN_CHECKTYPES=file://./script/checktypes-stable.json
+export VULCAN_CHECKTYPES=./script/checktypes-stable.json
 
 # Execute all checks on WebAddress that matches 'exposed' regex
 vulcan-local -t http://localhost:1234 -i exposed
@@ -266,7 +266,7 @@ Start scanning a local http server
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v $PWD/script:/app/script \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -checktypes file:///app/script/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes /app/script/checktypes-stable.json
 ```
 
 Start scanning a local Git repository. **The target path must point to the base of a git repository.**
@@ -275,5 +275,5 @@ Start scanning a local Git repository. **The target path must point to the base 
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD/script:/app/script -v $PWD:/src \
   -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-  vulcan-local -t /src -checktypes file:///app/script/checktypes-stable.json
+  vulcan-local -t /src -checktypes /app/script/checktypes-stable.json
 ```
