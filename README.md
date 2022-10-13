@@ -67,12 +67,8 @@ targets:
 # List of specific checks to run
 checks:
   # Check current path
-  - type: vulcan-seekret
+  - type: vulcan-gitleaks
     target: .
-
-  # Check with default options
-  - type: vulcan-zap
-    target: http://localhost:1234
 
 reporting:
 

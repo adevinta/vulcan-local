@@ -1,19 +1,22 @@
 policies:
   - name: default
     checks:
-      - type: vulcan-seekret
+      - type: vulcan-gitleaks
       - type: vulcan-zap
         options:
           max_scan_duration: 3
       - type: vulcan-trivy
+      - type: vulcan-semgrep
 
   - name: lightweight
     checks:
-      - type: vulcan-seekret
+      - type: vulcan-gitleaks
       - type: vulcan-trivy
+      - type: vulcan-semgrep
 
   - name: full-scan
     checks:
-      - type: vulcan-seekret
+      - type: vulcan-gitleaks
       - type: vulcan-zap
       - type: vulcan-trivy
+      - type: vulcan-semgrep
