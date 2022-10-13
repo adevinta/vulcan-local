@@ -56,7 +56,7 @@ func main() {
 			Vars:        map[string]string{},
 		},
 		Reporting: config.Reporting{
-			Format:   "report",
+			Format:   config.FormatReport,
 			Severity: config.SeverityHigh,
 		},
 		CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{},
@@ -94,7 +94,9 @@ func main() {
 		return cfg.Conf.LogLevel.UnmarshalText([]byte(s))
 	})
 	flag.StringVar(&cfg.Conf.Policy, "p", "", "policy to execute")
-	flag.StringVar(&cfg.Reporting.Format, "f", cfg.Reporting.Format, "output format (eg report, json)")
+	flag.Func("f", genFlagMsg("output format", "", cfg.Reporting.Format.String(), "", config.ReportFormatNames()), func(s string) error {
+		return cfg.Reporting.Format.UnmarshalText([]byte(s))
+	})
 	flag.StringVar(&cfg.Reporting.OutputFile, "r", "", "results file, defaults to stdout (eg results.json)")
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
 	flag.StringVar(&cfg.Conf.Exclude, "e", cfg.Conf.Exclude, "exclude checktype regex")

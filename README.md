@@ -101,8 +101,8 @@ Usage of vulcan-local:
     	docker binary (default "docker")
   -e string
     	exclude checktype regex
-  -f string
-    	output format (eg report, json) (default "report")
+  -f value
+    	output format [json report] (Default "report")
   -git string
     	git binary (default "git")
   -h	print usage
@@ -169,11 +169,14 @@ vulcan-local -t http://localhost:1234 -e zap
 # Execute all checks on WebAddress with the indicated option.
 vulcan-local -t http://localhost:1234 -o '{"depth": 1}'
 
-# Execute all checks for GitRepository targets (. has to be the root of a git repo)
+# Execute all checks for GitRepository targets
 vulcan-local -t . -a GitRepository
 
 # Execute all checks . inferring the asset type
 vulcan-local -t .
+
+# Get the results in json format
+vulcan-local -t . -f json | jq .
 ```
 
 ### Running local checks

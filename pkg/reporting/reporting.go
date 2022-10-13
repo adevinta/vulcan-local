@@ -203,7 +203,7 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 	vs := parseReports(results.Checks, cfg, l)
 
 	// TODO: Unify filtering for all the formats.
-	if cfg.Reporting.Format == "json" {
+	if cfg.Reporting.Format == config.FormatJSON {
 		// TODO: Decide if we want to keep filtering JSON output by threshold and exclusion
 		// Recreates the original report map filtering the Excluded and Threshold
 		// json: Just print the reports as an slice
@@ -222,7 +222,7 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		}
 		str, _ := json.MarshalIndent(slice, "", "  ")
 		fmt.Fprint(output, string(str))
-	} else if cfg.Reporting.Format == "report" {
+	} else if cfg.Reporting.Format == config.FormatReport {
 		var sb strings.Builder
 		for _, s := range config.Severities() {
 			sd := s.Data()
@@ -236,8 +236,7 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		fmt.Fprint(output, summaryTable(vs, l))
 		fmt.Fprint(output, sb.String())
 	} else {
-		// TODO: Create an enum and validate on command parsing.
-		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format)
+		return config.ErrorExitCode, fmt.Errorf("report format unknown %s", cfg.Reporting.Format.String())
 	}
 
 	// Get max reported score in vulnerabilities

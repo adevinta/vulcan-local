@@ -90,10 +90,10 @@ type Exclusion struct {
 }
 
 type Reporting struct {
-	Severity   Severity    `yaml:"severity"`
-	Format     string      `yaml:"format"`
-	OutputFile string      `yaml:"outputFile"`
-	Exclusions []Exclusion `yaml:"exclusions"`
+	Severity   Severity     `yaml:"severity"`
+	Format     ReportFormat `yaml:"format"`
+	OutputFile string       `yaml:"outputFile"`
+	Exclusions []Exclusion  `yaml:"exclusions"`
 }
 
 type Severity int
@@ -104,6 +104,13 @@ const (
 	SeverityMedium
 	SeverityLow
 	SeverityInfo
+)
+
+type ReportFormat int
+
+const (
+	FormatJSON ReportFormat = iota
+	FormatReport
 )
 
 const (
@@ -214,6 +221,42 @@ func FindSeverityByScore(score float32) Severity {
 		}
 	}
 	return severities[len(severities)-1].Severity
+}
+
+var reportFormatString = map[ReportFormat]string{
+	FormatJSON:   "json",
+	FormatReport: "report",
+}
+
+func (f *ReportFormat) String() string {
+	if a, ok := reportFormatString[*f]; ok {
+		return a
+	}
+	return "unknown"
+}
+
+func (a *ReportFormat) MarshalText() (text []byte, err error) {
+	return []byte(a.String()), nil
+}
+
+// UnmarshalText creates a Severity from its string representation.
+func (a *ReportFormat) UnmarshalText(text []byte) error {
+	val := string(text)
+	for k, v := range reportFormatString {
+		if v == val {
+			*a = k
+			return nil
+		}
+	}
+	return fmt.Errorf("error value %s is not a valid ReportFormat value", val)
+}
+
+func ReportFormatNames() []string {
+	s := []string{}
+	for _, v := range reportFormatString {
+		s = append(s, v)
+	}
+	return s
 }
 
 func ReadConfig(url string, cfg *Config, l log.Logger) error {
