@@ -15,7 +15,7 @@ import (
 
 // buildDockerImage builds and image given a tar, a list of tags and labels.
 func buildDockerdImage(tarFile io.Reader, tags []string, labels map[string]string) (response string, err error) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return "", err
 	}
@@ -24,6 +24,7 @@ func buildDockerdImage(tarFile io.Reader, tags []string, labels map[string]strin
 	buildOptions := types.ImageBuildOptions{
 		Tags:   tags,
 		Labels: labels,
+		Remove: true,
 	}
 
 	re, err := cli.ImageBuild(ctx, tarFile, buildOptions)
@@ -36,7 +37,7 @@ func buildDockerdImage(tarFile io.Reader, tags []string, labels map[string]strin
 }
 
 func imageInfo(image string) (map[string]string, error) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -213,7 +212,7 @@ func addDir(sourceDir string, currentPath string, writer *tar.Writer, finfo []os
 		absFilePath := path.Join(sourceDir, tarPath)
 
 		var content []byte
-		content, err = ioutil.ReadFile(absFilePath)
+		content, err = os.ReadFile(absFilePath)
 		if err != nil {
 			return err
 		}
