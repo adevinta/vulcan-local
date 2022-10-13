@@ -37,13 +37,9 @@ targets:
 
 checks:
 
-  # Check current path
-  - type: vulcan-seekret
-    target: ${TRAVIS_BUILD_DIR:-.}
-
   # The current remote git target
-  - type: vulcan-seekret
-    target: https://github.com/${TRAVIS_REPO_SLUG}.git
+  - type: vulcan-gitleaks
+    target: https://github.com/${TRAVIS_REPO_SLUG:-adevinta/vulcan-local}.git
     options:
       branch: ${TRAVIS_BRANCH}
 
