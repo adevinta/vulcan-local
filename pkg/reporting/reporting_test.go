@@ -4,10 +4,14 @@ Copyright 2022 Adevinta
 package reporting
 
 import (
+	"bytes"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	agentlog "github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	report "github.com/adevinta/vulcan-report"
 	"github.com/google/go-cmp/cmp"
@@ -120,72 +124,289 @@ func TestParseReports(t *testing.T) {
 		reports map[string]*report.Report
 		cfg     *config.Config
 		want    []ExtendedVulnerability
-		wantErr error
 	}{
 		{
 			name: "HappyPath",
-			reports: map[string]*report.Report{
-				"12345": {
-					CheckData: report.CheckData{
-						ChecktypeName:    "vulcan-trivy",
-						ChecktypeVersion: "latest",
-						Status:           "FINISHED",
-						Target:           "appsecco/dsvw:latest",
-					},
-					ResultData: report.ResultData{
-						Vulnerabilities: []report.Vulnerability{
-							{ID: ""},
-						},
-					},
-				},
-			},
 			cfg: &config.Config{
 				Checks: []config.Check{
 					{
+						Id:        "123456",
 						Type:      "vulcan-trivy",
 						Target:    "appsecco/dsvw:latest",
-						AssetType: "DockerImage",
-						NewTarget: "",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"123456": {
+					CheckData: report.CheckData{
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "appsecco/dsvw:latest",
+					},
+					ResultData: report.ResultData{
+						Vulnerabilities: []report.Vulnerability{{ID: "foo"}},
 					},
 				},
 			},
 			want: []ExtendedVulnerability{
 				{
 					CheckData: &report.CheckData{
-						ChecktypeName:    "vulcan-trivy",
-						ChecktypeVersion: "latest",
-						Status:           "FINISHED",
-						Target:           "appsecco/dsvw:latest",
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "appsecco/dsvw:latest",
+					},
+					Vulnerability: &report.Vulnerability{ID: "foo"},
+					Severity:      config.SeverityInfo.Data(),
+					Excluded:      false,
+				},
+			},
+		},
+		{
+			name: "NotScheduled",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{},
+			want:    []ExtendedVulnerability{},
+		},
+		{
+			name: "ScheduledWithoutReport",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "1234",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{},
+			want:    []ExtendedVulnerability{},
+		},
+		{
+			name: "NewTarget",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "123456",
+						Type:      "vulcan-trivy",
+						Target:    "ORIGINALTARGET",
+						NewTarget: "NEWTARGET",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"123456": {
+					CheckData: report.CheckData{
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "NEWTARGET",
+					},
+					ResultData: report.ResultData{
+						Vulnerabilities: []report.Vulnerability{
+							{
+								ID:              "foo",
+								Details:         "Vulnerability in NEWTARGET.",
+								Recommendations: []string{"Fix NEWTARGET."},
+								Resources: []report.ResourcesGroup{{
+									Rows: []map[string]string{{"col": "...NEWTARGET..."}},
+								},
+								},
+							}},
+					},
+				},
+			},
+			want: []ExtendedVulnerability{
+				{
+					CheckData: &report.CheckData{
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "ORIGINALTARGET",
 					},
 					Vulnerability: &report.Vulnerability{
-						ID: "",
+						ID:              "foo",
+						Details:         "Vulnerability in ORIGINALTARGET.",
+						Recommendations: []string{"Fix ORIGINALTARGET."},
+						Resources: []report.ResourcesGroup{{
+							Rows: []map[string]string{{"col": "...ORIGINALTARGET..."}},
+						},
+						},
 					},
-					Severity: &config.SeverityData{
-						Severity:  config.SeverityInfo,
-						Name:      "INFO",
-						Threshold: 0,
-						Exit:      config.SuccessExitCode,
-						Color:     36, // Light blue
-					},
+					Severity: config.SeverityInfo.Data(),
 					Excluded: false,
 				},
 			},
-			wantErr: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			got := parseReports(tt.reports, tt.cfg, loggerUser)
-
 			diff := cmp.Diff(got, tt.want)
 			if diff != "" {
 				t.Errorf("%v\n", diff)
 			}
 		})
 	}
+}
 
+func TestCheckRequiredVars(t *testing.T) {
+	buf := bytes.Buffer{}
+	loggerUser.SetOutput(&buf)
+	tests := []struct {
+		name        string
+		reports     map[string]*report.Report
+		cfg         *config.Config
+		want        []ExtendedVulnerability
+		wantLog     string
+		dontWantLog string
+	}{
+		{
+			name: "HappyPath",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					Vars: map[string]string{},
+				},
+				Checks: []config.Check{
+					{
+						Id:        "FINISHED",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"OPTVAR"},
+						},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"FINISHED": {
+					CheckData: report.CheckData{
+						ChecktypeName:    "vulcan-trivy",
+						ChecktypeVersion: "latest",
+						Status:           "FINISHED",
+						Target:           "appsecco/dsvw:latest",
+					},
+				},
+			},
+			wantLog:     "",       // If the check fails and the variable was set a log is expected.
+			dontWantLog: "OPTVAR", // If the check finishes we don't expect a log.
+		},
+		{
+			name: "FailedWithInformedVars",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					Vars: map[string]string{
+						"VAR": "VALUE",
+					},
+				},
+				Checks: []config.Check{
+					{
+						Id:        "XX",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"VAR"},
+						},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"XX": {
+					CheckData: report.CheckData{
+						ChecktypeName:    "vulcan-trivy",
+						ChecktypeVersion: "latest",
+						Status:           "FAILED",
+						Target:           "appsecco/dsvw:latest",
+					},
+				},
+			},
+			wantLog:     "",    // If the check fails and the variable was set a log is expected.
+			dontWantLog: "VAR", // If the check finishes we don't expect a log.
+		},
+		{
+			name: "FailedWithUnInformedVars",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					Vars: map[string]string{},
+				},
+				Checks: []config.Check{
+					{
+						Id:        "XX",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"VAR"},
+						},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"XX": {
+					CheckData: report.CheckData{
+						ChecktypeName:    "vulcan-trivy",
+						ChecktypeVersion: "latest",
+						Status:           "FAILED",
+						Target:           "appsecco/dsvw:latest",
+					},
+				},
+			},
+			wantLog:     "VAR", // If the check fails and the variable was set a log is expected.
+			dontWantLog: "",    // If the check finishes we don't expect a log.
+		},
+		{
+			name: "CrashedWithUnInformedVars",
+			cfg: &config.Config{
+				Conf: config.Conf{
+					Vars: map[string]string{},
+				},
+				Checks: []config.Check{
+					{
+						Id:        "XX",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						AssetType: "DockerImage",
+						NewTarget: "",
+						Checktype: &checktypes.Checktype{
+							RequiredVars: []string{"VAR"},
+						},
+					},
+				},
+			},
+			reports:     map[string]*report.Report{},
+			wantLog:     "VAR", // If the check fails and the variable was set a log is expected.
+			dontWantLog: "",    // If the check finishes we don't expect a log.
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loggerUser.SetLevel(agentlog.ParseLogLevel("INFO"))
+			checkRequiredVariables(tt.cfg, tt.reports, loggerUser)
+			if tt.wantLog != "" && !strings.Contains(buf.String(), tt.wantLog) {
+				t.Errorf("Missing log %s", tt.wantLog)
+			}
+			if tt.dontWantLog != "" && strings.Contains(buf.String(), tt.dontWantLog) {
+				t.Errorf("Unexpected log %s", tt.wantLog)
+			}
+			buf.Reset()
+		})
+	}
 }
 
 func TestUpdateReport(t *testing.T) {
