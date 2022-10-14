@@ -130,24 +130,19 @@ func TestParseReports(t *testing.T) {
 			cfg: &config.Config{
 				Checks: []config.Check{
 					{
-						Id:        "FINISHED",
+						Id:        "123456",
 						Type:      "vulcan-trivy",
 						Target:    "appsecco/dsvw:latest",
-						AssetType: "DockerImage",
-						NewTarget: "",
-						Checktype: &checktypes.Checktype{
-							RequiredVars: []string{"OPTVAR"},
-						},
+						Checktype: &checktypes.Checktype{},
 					},
 				},
 			},
 			reports: map[string]*report.Report{
-				"FINISHED": {
+				"123456": {
 					CheckData: report.CheckData{
-						ChecktypeName:    "vulcan-trivy",
-						ChecktypeVersion: "latest",
-						Status:           "FINISHED",
-						Target:           "appsecco/dsvw:latest",
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "appsecco/dsvw:latest",
 					},
 					ResultData: report.ResultData{
 						Vulnerabilities: []report.Vulnerability{{ID: "foo"}},
@@ -157,14 +152,98 @@ func TestParseReports(t *testing.T) {
 			want: []ExtendedVulnerability{
 				{
 					CheckData: &report.CheckData{
-						ChecktypeName:    "vulcan-trivy",
-						ChecktypeVersion: "latest",
-						Status:           "FINISHED",
-						Target:           "appsecco/dsvw:latest",
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "appsecco/dsvw:latest",
 					},
 					Vulnerability: &report.Vulnerability{ID: "foo"},
 					Severity:      config.SeverityInfo.Data(),
 					Excluded:      false,
+				},
+			},
+		},
+		{
+			name: "NotScheduled",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{},
+			want:    []ExtendedVulnerability{},
+		},
+		{
+			name: "ScheduledWithoutReport",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "1234",
+						Type:      "vulcan-trivy",
+						Target:    "appsecco/dsvw:latest",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{},
+			want:    []ExtendedVulnerability{},
+		},
+		{
+			name: "NewTarget",
+			cfg: &config.Config{
+				Checks: []config.Check{
+					{
+						Id:        "123456",
+						Type:      "vulcan-trivy",
+						Target:    "ORIGINALTARGET",
+						NewTarget: "NEWTARGET",
+						Checktype: &checktypes.Checktype{},
+					},
+				},
+			},
+			reports: map[string]*report.Report{
+				"123456": {
+					CheckData: report.CheckData{
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "NEWTARGET",
+					},
+					ResultData: report.ResultData{
+						Vulnerabilities: []report.Vulnerability{
+							{
+								ID:              "foo",
+								Details:         "Vulnerability in NEWTARGET.",
+								Recommendations: []string{"Fix NEWTARGET."},
+								Resources: []report.ResourcesGroup{{
+									Rows: []map[string]string{{"col": "...NEWTARGET..."}},
+								},
+								},
+							}},
+					},
+				},
+			},
+			want: []ExtendedVulnerability{
+				{
+					CheckData: &report.CheckData{
+						ChecktypeName: "vulcan-trivy",
+						Status:        "FINISHED",
+						Target:        "ORIGINALTARGET",
+					},
+					Vulnerability: &report.Vulnerability{
+						ID:              "foo",
+						Details:         "Vulnerability in ORIGINALTARGET.",
+						Recommendations: []string{"Fix ORIGINALTARGET."},
+						Resources: []report.ResourcesGroup{{
+							Rows: []map[string]string{{"col": "...ORIGINALTARGET..."}},
+						},
+						},
+					},
+					Severity: config.SeverityInfo.Data(),
+					Excluded: false,
 				},
 			},
 		},
