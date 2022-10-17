@@ -34,10 +34,13 @@ runs:
       if: ${{ inputs.only-repository == 'false' }}
       run: vulcan-local -c ${{ inputs.config-file }} -l ${{ inputs.log-level}} ${{ inputs.other-options }}
       shell: bash
+    - id: vulcan-cat
+      if: ${{ always() }}
+      run: cat vulcan-local.json
+      shell: bash
     - uses: actions/github-script@v6
       id: vulcan-local-result-comment
       if: ${{ always() }}
-      run: cat vulcan-local.json
       with:
         script: |
             console.log(context.issue)
