@@ -34,3 +34,17 @@ runs:
       if: ${{ inputs.only-repository == 'false' }}
       run: vulcan-local -c ${{ inputs.config-file }} -l ${{ inputs.log-level}} ${{ inputs.other-options }}
       shell: bash
+    - uses: actions/github-script@v6
+      id: vulcan-local-result-comment
+      with:
+        script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `**Test Message**
+
+                This is a test message!
+
+                `
+            })
