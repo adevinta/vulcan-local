@@ -28,7 +28,7 @@ runs:
       shell: bash
     - id: vulcan-local-run-only-repository
       if: ${{ inputs.only-repository == 'true' }}
-      run: vulcan-local -t . -checktypes ${{ inputs.checktypes }} -l ${{ inputs.log-level}} ${{ inputs.other-options }}
+      run: vulcan-local -t . -checktypes ${{ inputs.checktypes }} -l ${{ inputs.log-level}} -r vulcan-local.json ${{ inputs.other-options }}
       shell: bash
     - id: vulcan-local-run
       if: ${{ inputs.only-repository == 'false' }}
@@ -36,16 +36,20 @@ runs:
       shell: bash
     - uses: actions/github-script@v6
       id: vulcan-local-result-comment
+      if: ${{ always() }}
+      run: cat vulcan-local.json
       with:
         script: |
             console.log(context.issue)
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `**Test Message**
+            if (context.issue.number){
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `**Test Message**
 
-                This is a test message!
+                  This is a test message!
 
-                `
-            })
+                  `
+              })
+            }
