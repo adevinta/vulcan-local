@@ -148,24 +148,28 @@ cat ~/my_password.txt | docker login --username foo --password-stdin private.reg
 Scan a single asset with all the checkTypes that apply
 
 ```sh
+# Scan current directory as a git repo with the default checktypes.
+vulcan-local -t .
+
+# Scan the local http endpoint with the custom checktypes.
 vulcan-local -t http://localhost:1234 -i exposed -checktypes ./script/checktypes-stable.json
 
-# Set VULCAN_CHECKTYPES as the default checktypes uri (-checktypes flag)
+# Set VULCAN_CHECKTYPES as the default checktypes uri (-checktypes flag).
 export VULCAN_CHECKTYPES=./script/checktypes-stable.json
 
-# Execute all checks on WebAddress that matches 'exposed' regex
+# Execute all checks on WebAddress that matches 'exposed' regex.
 vulcan-local -t http://localhost:1234 -i exposed
 
-# Execute all checks on WebAddress that doesn't matches 'zap' regex
+# Execute all checks on WebAddress that doesn't matches 'zap' regex.
 vulcan-local -t http://localhost:1234 -e zap
 
 # Execute all checks on WebAddress with the indicated option.
 vulcan-local -t http://localhost:1234 -o '{"depth": 1}'
 
-# Execute all checks for GitRepository targets (. has to be the root of a git repo)
+# Execute all checks for GitRepository targets (. has to be the root of a git repo).
 vulcan-local -t . -a GitRepository
 
-# Execute all checks . inferring the asset type
+# Execute all checks . inferring the asset type.
 vulcan-local -t .
 ```
 

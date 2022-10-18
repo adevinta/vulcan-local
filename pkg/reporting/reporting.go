@@ -196,6 +196,19 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 	// Print summary table
 	summaryTable(vs, l)
 
+	var rs string
+	for _, s := range config.Severities() {
+		sd := s.Data()
+		for _, v := range vs {
+			if v.Severity.Name == sd.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
+				rs = fmt.Sprintf("%s%s", rs, printVulnerability(&v, l))
+			}
+		}
+	}
+	if len(rs) > 0 {
+		l.Infof("\nVulnerabilities details:\n%s", rs)
+	}
+
 	outputFile := cfg.Reporting.OutputFile
 	if outputFile != "" {
 		// TODO: Decide if we want to keep filtering JSON output by threshold and exclusion
@@ -214,9 +227,9 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 				r.Vulnerabilities = append(r.Vulnerabilities, *(e.Vulnerability))
 			}
 		}
-		str, _ := json.Marshal(slice)
+		str, _ := json.MarshalIndent(slice, "", "    ")
 		if outputFile == "-" {
-			fmt.Fprint(os.Stderr, string(str))
+			fmt.Fprint(os.Stdout, string(str))
 		} else {
 			dir := filepath.Dir(outputFile)
 			err := os.MkdirAll(dir, 0o744)
@@ -232,19 +245,6 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 				return config.ErrorExitCode, fmt.Errorf("unable to write report file %s %+v", outputFile, err)
 			}
 		}
-	}
-
-	var rs string
-	for _, s := range config.Severities() {
-		sd := s.Data()
-		for _, v := range vs {
-			if v.Severity.Name == sd.Name && !v.Excluded && v.Severity.Threshold >= requested.Threshold {
-				rs = fmt.Sprintf("%s%s", rs, printVulnerability(&v, l))
-			}
-		}
-	}
-	if len(rs) > 0 {
-		l.Infof("\nVulnerabilities details:\n%s", rs)
 	}
 
 	// Get max reported score in vulnerabilities
