@@ -8,7 +8,6 @@ set -e
 : "${USE_SUDO:="true"}"
 : "${BINARY_NAME:="vulcan-local"}"
 : "${RELEASES_URL:="https://github.com/adevinta/vulcan-local/releases"}"
-: "${DEFAULT_CHECKTYPES:="https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"}"
 
 last_version() {
   curl -sL -o /dev/null -w "%{url_effective}" "$RELEASES_URL/latest" |
@@ -65,11 +64,6 @@ install() {
 }
 
 run() {
-  if [ -z "$VULCAN_CHECKTYPES" ]; then
-    echo "Using checktypes from $DEFAULT_CHECKTYPES"
-    export VULCAN_CHECKTYPES=$DEFAULT_CHECKTYPES
-  fi
-
   echo "$BINARY_NAME ${*}"
   "${TMPDIR}/vulcan-local" "$@"
 }

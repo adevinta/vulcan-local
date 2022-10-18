@@ -21,7 +21,7 @@ echo "exit=$?"
 # Add a path and a tag to bypass check target validations.
 docker tag vulcan-local path/vulcan-local:xxx
 echo "Test local docker image"
-./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy -checktypes ./script/checktypes-stable.json
+./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy
 echo "exit=$?"
 
 echo "Docker test based on yaml config"
@@ -35,7 +35,7 @@ echo "Docker test local app as a webaddress excluding nessus and zap"
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock  \
     -v "$PWD":/target \
     -e TRAVIS_BUILD_DIR=/target -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -e '(nessus|zap)' -checktypes /target/script/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -e '(nessus|zap)'
 echo "exit=$?"
 
 echo "Stopping target app"
