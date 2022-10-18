@@ -172,11 +172,7 @@ func ShowProgress(cfg *config.Config, results *results.ResultsServer, l log.Logg
 			statusMap[status] = 1
 		}
 	}
-	s := ""
-	for k, v := range statusMap {
-		s += fmt.Sprintf("%s:%d ", k, v)
-	}
-	l.Infof("Check progress [%s]", strings.TrimSpace(s))
+	l.Infof("Check progress %s", strings.TrimPrefix(fmt.Sprintf("%v", statusMap), "map"))
 }
 
 func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) (int, error) {
