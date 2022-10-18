@@ -23,6 +23,7 @@ import (
 const (
 	envDefaultChecktypesUri  = "VULCAN_CHECKTYPES"
 	envDefaultVulcanLocalUri = "VULCAN_CONFIG"
+	checktypesDefaultURL     = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"
 )
 
 var (
@@ -130,7 +131,7 @@ func main() {
 	flag.Func("s", genFlagMsg("filter by severity", "", cfg.Reporting.Severity.Data().Name, "", config.SeverityNames()), func(s string) error {
 		return cfg.Reporting.Severity.UnmarshalText([]byte(s))
 	})
-	flag.Func("checktypes", genFlagMsg("checktype uris", "", "", envDefaultChecktypesUri, nil), func(s string) error {
+	flag.Func("checktypes", genFlagMsg("checktype uris", "", checktypesDefaultURL, envDefaultChecktypesUri, nil), func(s string) error {
 		cmdRepositories = append(cmdRepositories, s)
 		return nil
 	})
@@ -191,6 +192,11 @@ func main() {
 	}
 
 	cfg.Conf.Repositories = append(cfg.Conf.Repositories, cmdRepositories...)
+
+	if len(cfg.Conf.Repositories) == 0 {
+		log.Infof("No checktypes specified. Using default %s", checktypesDefaultURL)
+		cfg.Conf.Repositories = []string{checktypesDefaultURL}
+	}
 
 	// Overwrite config targets in case of command line targets
 	if len(cmdTargets) > 0 {
