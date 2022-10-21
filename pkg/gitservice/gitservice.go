@@ -5,10 +5,13 @@ Copyright 2021 Adevinta
 package gitservice
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -101,9 +104,27 @@ func (gs *gitService) createTmpRepository(path string) (string, error) {
 		return "", err
 	}
 
+	var cmdOut, cmdErr bytes.Buffer
+	ignore := map[string]bool{}
+	cmd := exec.Command("git", "-C", path, "ls-files", "--exclude-standard", "-oi")
+	cmd.Stdout = &cmdOut
+	cmd.Stderr = &cmdErr
+	if err := cmd.Run(); err != nil {
+		// The path is not part of a git repo... it's ok
+		gs.log.Debugf("find .gitignored files error: %s.", cmdErr.String())
+	} else {
+		if cmdOut.Len() > 0 {
+			for _, f := range strings.Split(cmdOut.String(), "\n") {
+				ignore[filepath.Join(path, f)] = true
+			}
+		}
+	}
+
 	err = copy.Copy(path, tmpRepositoryPath, copy.Options{Skip: func(src string) (bool, error) {
-		return strings.HasSuffix(src, ".git"), nil
+		_, ok := ignore[src]
+		return ok || filepath.Base(src) == ".git", nil
 	}})
+
 	gs.log.Debugf("Copied %s to %s", path, tmpRepositoryPath)
 	if err != nil {
 		gs.log.Errorf("Error coping tmp file: %s", err)
