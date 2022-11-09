@@ -98,13 +98,13 @@
                 "branch": "",
                 "git_checks": {
                     "vuln": true,
-                    "secret": false,
-                    "config": false
+                    "secret": true,
+                    "config": true
                 },
                 "image_checks": {
                     "vuln": true,
-                    "secret": false,
-                    "config": false
+                    "secret": true,
+                    "config": true
                 }
             }
         },
