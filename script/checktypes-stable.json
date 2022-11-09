@@ -85,11 +85,28 @@
             "required_vars": [
                 "REGISTRY_DOMAIN",
                 "REGISTRY_USERNAME",
-                "REGISTRY_PASSWORD"
+                "REGISTRY_PASSWORD",
+                "GITHUB_ENTERPRISE_ENDPOINT",
+                "GITHUB_ENTERPRISE_TOKEN"
             ],
             "assets": [
-                "DockerImage"
-            ]
+                "DockerImage",
+                "GitRepository"
+            ],
+            "options": {
+                "depth": 1,
+                "branch": "",
+                "git_checks": {
+                    "vuln": true,
+                    "secret": true,
+                    "config": true
+                },
+                "image_checks": {
+                    "vuln": true,
+                    "secret": true,
+                    "config": true
+                }
+            }
         },
         {
             "name": "vulcan-wpscan",
