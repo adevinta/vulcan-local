@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -106,7 +107,7 @@ func (gs *gitService) createTmpRepository(path string) (string, error) {
 
 	var cmdOut, cmdErr bytes.Buffer
 	ignore := map[string]bool{}
-	cmd := exec.Command("git", "-C", path, "ls-files", "--exclude-standard", "-oi")
+	cmd := exec.Command("git", "-C", path, "ls-files", "--exclude-standard", "-oi", "--directory")
 	cmd.Stdout = &cmdOut
 	cmd.Stderr = &cmdErr
 	if err := cmd.Run(); err != nil {
@@ -115,12 +116,14 @@ func (gs *gitService) createTmpRepository(path string) (string, error) {
 	} else {
 		if cmdOut.Len() > 0 {
 			for _, f := range strings.Split(cmdOut.String(), "\n") {
-				ignore[filepath.Join(path, f)] = true
+				f := strings.TrimSuffix(f, "/") // store directories without trailing slash
+				f = filepath.Join(path, f)
+				ignore[f] = true
 			}
 		}
 	}
 
-	err = copy.Copy(path, tmpRepositoryPath, copy.Options{Skip: func(src string) (bool, error) {
+	err = copy.Copy(path, tmpRepositoryPath, copy.Options{Skip: func(srcinfo fs.FileInfo, src string, dest string) (bool, error) {
 		_, ok := ignore[src]
 		return ok || filepath.Base(src) == ".git", nil
 	}})
