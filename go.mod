@@ -16,7 +16,7 @@ require (
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/manelmontilla/toml v0.3.0
-	github.com/otiai10/copy v1.7.0
+	github.com/otiai10/copy v1.9.0
 	github.com/p4tin/goaws v1.1.2
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/sirupsen/logrus v1.9.0
