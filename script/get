@@ -16,6 +16,15 @@ last_version() {
     rev
 }
 
+machine() {
+  m=$(uname -m)
+  if [ "$m" = "aarch64" ]; then
+    echo arm64
+  else
+    echo $m
+  fi
+}
+
 download() {
   TMPDIR=$(mktemp -dt vulcan-installer-XXXX)
 
@@ -24,7 +33,8 @@ download() {
     echo "Unable to get vulcan-local version." >&2
     exit 1
   }
-  DOWNLOAD_URL="$RELEASES_URL/download/$DESIRED_VERSION/vulcan-local_$(uname -s)_$(uname -m).tar.gz"
+
+  DOWNLOAD_URL="$RELEASES_URL/download/$DESIRED_VERSION/vulcan-local_$(uname -s)_$(machine).tar.gz"
 
   set +e
 
