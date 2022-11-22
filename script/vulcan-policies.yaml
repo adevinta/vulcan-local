@@ -1,22 +1,21 @@
 policies:
-  - name: default
+  - name: static
     checks:
       - type: vulcan-gitleaks
-      - type: vulcan-zap
         options:
-          max_scan_duration: 3
+          branch: ""
+          depth: 1
       - type: vulcan-trivy
       - type: vulcan-semgrep
+        options:
+          branch: ""
+          depth: 1
+          ruleset: "p/r2c-security-audit"
 
-  - name: lightweight
+  - name: web
     checks:
-      - type: vulcan-gitleaks
-      - type: vulcan-trivy
-      - type: vulcan-semgrep
-
-  - name: full-scan
-    checks:
-      - type: vulcan-gitleaks
+      - type: vulcan-retirejs
       - type: vulcan-zap
-      - type: vulcan-trivy
-      - type: vulcan-semgrep
+      - type: vulcan-exposed-http-resources
+      - type: vulcan-exposed-http
+      - type: vulcan-exposed-files
