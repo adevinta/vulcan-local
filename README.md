@@ -3,7 +3,7 @@
 vulcan-local allows to execute security checks locally.
 
 - Is part of **Vulcan vulnerability scanning** ecosystem. See <https://adevinta.github.io/vulcan-docs/>
-- Leverages [vulcan-checks](https://github.com/vulcan-checks) catalog.
+- Leverages [vulcan-checks](https://github.com/adevinta/vulcan-checks) catalog.
 - The checks are executed in your local machine or in a CI/CD pipeline.
 - Only `docker` and `git` are required.
 - The checks can access local assets.
