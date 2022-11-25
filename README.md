@@ -282,7 +282,6 @@ Start scanning a local http server
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v $PWD/script:/app/script \
-    -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
     vulcan-local -t http://localhost:1234 -checktypes /app/script/checktypes-stable.json
 ```
 
@@ -291,6 +290,5 @@ Start scanning a local Git repository. **The target path must point to the base 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD/script:/app/script -v $PWD:/src \
-  -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
   vulcan-local -t /src -checktypes /app/script/checktypes-stable.json
 ```
