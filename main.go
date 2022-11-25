@@ -11,6 +11,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	agentconfig "github.com/adevinta/vulcan-agent/config"
@@ -67,6 +68,7 @@ func main() {
 	cmdTargets := []*config.Target{}
 	cmdRepositories := []string{}
 	cmdConfigs := []string{}
+	cmdVars := map[string]string{}
 
 	genFlagMsg := func(msg, example string, def string, env string, options interface{}) string {
 		if example != "" {
@@ -143,6 +145,15 @@ func main() {
 	flag.Func("pullpolicy", genFlagMsg("when to pull for check images", "", defPullPolicyName, "", agentconfig.PullPolicies()), func(s string) error {
 		return cfg.Conf.PullPolicy.UnmarshalText([]byte(s))
 	})
+	flag.Func("v", genFlagMsg("required vars", "-v REGISTRY_DOMAIN=whatever -v REGISTRY_PASSWORD", "", "", nil), func(s string) error {
+		a := strings.Split(s, "=")
+		if len(a) == 1 {
+			cmdVars[s] = os.Getenv(s)
+		} else {
+			cmdVars[a[0]] = a[1]
+		}
+		return nil
+	})
 	flag.Parse()
 	log.SetLevel(cfg.Conf.LogLevel)
 
@@ -196,6 +207,11 @@ func main() {
 	if len(cfg.Conf.Repositories) == 0 {
 		log.Infof("No checktypes specified. Using default %s", checktypesDefaultURL)
 		cfg.Conf.Repositories = []string{checktypesDefaultURL}
+	}
+
+	// Add the command line vars after processing all the -c configs.yaml
+	for k, v := range cmdVars {
+		cfg.Conf.Vars[k] = v
 	}
 
 	// Overwrite config targets in case of command line targets

@@ -83,6 +83,10 @@ vulcan-local -t .
 
 # See the report in json
 vulcan-local -t . -r - -l ERROR | jq .
+
+# Pass variables trough command line (those examples are equivalent)
+vulcan-local -t https://wordpress.org -i wpscan -v WPVULNDB_API_TOKEN
+vulcan-local -t https://wordpress.org -i wpscan -v WPVULNDB_API_TOKEN=$WPVULNDB_API_TOKEN
 ```
 
 Also the tool can be used to scan remote resources.
