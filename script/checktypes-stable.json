@@ -81,7 +81,7 @@
             "name": "vulcan-trivy",
             "description": "Scan docker images using aquasec/trivy",
             "image": "vulcansec/vulcan-trivy:edge",
-            "timeout": 0,
+            "timeout": 300,
             "required_vars": [
                 "REGISTRY_DOMAIN",
                 "REGISTRY_USERNAME",
