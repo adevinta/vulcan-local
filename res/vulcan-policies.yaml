@@ -7,10 +7,6 @@ policies:
           depth: 1
       - type: vulcan-trivy
       - type: vulcan-semgrep
-        options:
-          branch: ""
-          depth: 1
-          ruleset: "p/r2c-security-audit"
 
   - name: web
     checks:

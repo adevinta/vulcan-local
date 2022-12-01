@@ -32,13 +32,13 @@ Install binary releases
 
 ```sh
 # Install last release
-curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/res/get | sh
 
 # Install specific version
-curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- --version v0.0.1
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/res/get | sh -s -- --version v0.0.1
 
 # Show available options
-curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- --help
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/res/get | sh -s -- --help
 Accepted cli arguments are:
   [--help|-h ] ->> prints this help
   [--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub
@@ -46,7 +46,7 @@ Accepted cli arguments are:
   [--run|--] ... ->> Skip install and run the downloaded vulcan-local temp binary with the extra params
 
 # Executing without installing
-curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/get | sh -s -- \
+curl -sfL https://raw.githubusercontent.com/adevinta/vulcan-local/master/res/get | sh -s -- \
   --run -t .
 ```
 
@@ -148,7 +148,7 @@ This is a very simple config file with two checks:
 ```yaml
 conf:
   repositories:
-    - ./script/checktypes-stable.json
+    - ./res/checktypes-stable.json
 
 # List of targets to scan generating checks from all available checktypes
 targets:
@@ -288,16 +288,16 @@ Start scanning a local http server
 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $PWD/script:/app/script \
+    -v $PWD/res:/app/res \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -checktypes /app/script/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes /app/res/checktypes-stable.json
 ```
 
 Start scanning a local Git repository. **The target path must point to the base of a git repository.**
 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $PWD/script:/app/script -v $PWD:/src \
+  -v $PWD/res:/app/res -v $PWD:/src \
   -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-  vulcan-local -t /src -checktypes /app/script/checktypes-stable.json
+  vulcan-local -t /src -checktypes /app/res/checktypes-stable.json
 ```

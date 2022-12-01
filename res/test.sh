@@ -11,11 +11,11 @@ docker run -p 1234:8000 --restart unless-stopped --name dsvw -d appsecco/dsvw
 sleep 5
 
 echo "Test based on yaml config using static policy"
-./vulcan-local -c ./vulcan.yaml -c ./script/vulcan-policies.yaml -p static
+./vulcan-local -c ./vulcan.yaml -c ./res/vulcan-policies.yaml -p static
 echo "exit=$?"
 
 echo "Test local path as a git repository excluding the github check"
-./vulcan-local -t . -e github -checktypes ./script/checktypes-stable.json
+./vulcan-local -t . -e github -checktypes ./res/checktypes-stable.json
 echo "exit=$?"
 
 # Add a path and a tag to bypass check target validations.
