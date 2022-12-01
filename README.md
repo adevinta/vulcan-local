@@ -3,7 +3,7 @@
 vulcan-local allows to execute security checks locally.
 
 - Is part of **Vulcan vulnerability scanning** ecosystem. See <https://adevinta.github.io/vulcan-docs/>
-- Leverages [vulcan-checks](https://github.com/vulcan-checks) catalog.
+- Leverages [vulcan-checks](https://github.com/adevinta/vulcan-checks) catalog.
 - The checks are executed in your local machine or in a CI/CD pipeline.
 - Only `docker` and `git` are required.
 - The checks can access local assets.
@@ -83,6 +83,10 @@ vulcan-local -t .
 
 # See the report in json
 vulcan-local -t . -r - -l ERROR | jq .
+
+# Pass variables trough command line (those examples are equivalent)
+vulcan-local -t https://wordpress.org -i wpscan -v WPVULNDB_API_TOKEN
+vulcan-local -t https://wordpress.org -i wpscan -v WPVULNDB_API_TOKEN=$WPVULNDB_API_TOKEN
 ```
 
 Also the tool can be used to scan remote resources.
@@ -288,6 +292,8 @@ Start scanning a local http server
 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $PWD/script:/app/script \
+    vulcan-local -t http://localhost:1234 -checktypes /app/script/checktypes-stable.json
     -v $PWD/res:/app/res \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
     vulcan-local -t http://localhost:1234 -checktypes /app/res/checktypes-stable.json
@@ -298,6 +304,5 @@ Start scanning a local Git repository. **The target path must point to the base 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD/res:/app/res -v $PWD:/src \
-  -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
   vulcan-local -t /src -checktypes /app/res/checktypes-stable.json
 ```
