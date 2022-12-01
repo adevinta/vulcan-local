@@ -583,7 +583,7 @@ func TestAddPolicyChecks(t *testing.T) {
 			name: "HappyPath",
 			cfg: &config.Config{
 				Conf: config.Conf{
-					Policy: "static",
+					Policy: "test-static",
 				},
 				CheckTypes: map[checktypes.ChecktypeRef]checktypes.Checktype{
 					"vulcan-zap": {
@@ -597,7 +597,7 @@ func TestAddPolicyChecks(t *testing.T) {
 				},
 				Policies: []config.Policy{
 					{
-						Name: "static",
+						Name: "test-static",
 						CheckTypes: []config.PolicyCheck{
 							{
 								CheckType: "vulcan-trivy",

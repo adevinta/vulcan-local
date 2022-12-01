@@ -1,5 +1,5 @@
 policies:
-  - name: static
+  - name: internal-static
     checks:
       - type: vulcan-gitleaks
         options:
@@ -8,7 +8,7 @@ policies:
       - type: vulcan-trivy
       - type: vulcan-semgrep
 
-  - name: web
+  - name: internal-web
     checks:
       - type: vulcan-retirejs
       - type: vulcan-zap

@@ -25,7 +25,7 @@ const (
 	envDefaultChecktypesUri  = "VULCAN_CHECKTYPES"
 	envDefaultVulcanLocalUri = "VULCAN_CONFIG"
 	checktypesDefaultURL     = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"
-	defaultPoliciesURL       = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml"
+	defaultPoliciesURL       = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/resources/internal-policies.yaml"
 )
 
 var (
@@ -210,11 +210,14 @@ func main() {
 		cfg.Conf.Repositories = []string{checktypesDefaultURL}
 	}
 
-	log.Debug("Loading default policies ...")
-	err = config.ReadConfig(defaultPoliciesURL, cfg, log)
-	if err != nil {
-		log.Error(err)
+	if cfg.Conf.Policy != "" {
+		log.Debug("Loading default policies ...")
+		err = config.ReadConfig(defaultPoliciesURL, cfg, log)
+		if err != nil {
+			log.Error(err)
+		}
 	}
+
 	// Add the command line vars after processing all the -c configs.yaml
 	for k, v := range cmdVars {
 		cfg.Conf.Vars[k] = v
