@@ -24,7 +24,7 @@ import (
 const (
 	envDefaultChecktypesUri  = "VULCAN_CHECKTYPES"
 	envDefaultVulcanLocalUri = "VULCAN_CONFIG"
-	checktypesDefaultURL     = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/checktypes-stable.json"
+	checktypesDefaultURL     = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/resources/checktypes.json"
 	defaultPoliciesURL       = "https://raw.githubusercontent.com/adevinta/vulcan-local/master/resources/internal-policies.yaml"
 )
 

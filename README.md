@@ -152,7 +152,7 @@ This is a very simple config file with two checks:
 ```yaml
 conf:
   repositories:
-    - ./resources/checktypes-stable.json
+    - ./resources/checktypes.json
 
 # List of targets to scan generating checks from all available checktypes
 targets:
@@ -293,10 +293,10 @@ Start scanning a local http server
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v $PWD/script:/app/script \
-    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
     -v $PWD/resources:/app/resources \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
 ```
 
 Start scanning a local Git repository. **The target path must point to the base of a git repository.**
@@ -304,5 +304,5 @@ Start scanning a local Git repository. **The target path must point to the base 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD/resources:/app/resources -v $PWD:/src \
-  vulcan-local -t /src -checktypes /app/resources/checktypes-stable.json
+  vulcan-local -t /src -checktypes /app/resources/checktypes.json
 ```

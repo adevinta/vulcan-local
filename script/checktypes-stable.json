@@ -1,0 +1,152 @@
+{
+    "checktypes": [
+        {
+            "name": "vulcan-drupal",
+            "description": "Checks for some vulnerable versions of Drupal.",
+            "image": "vulcansec/vulcan-drupal:edge",
+            "timeout": 0,
+            "required_vars": null,
+            "assets": [
+                "Hostname"
+            ]
+        },
+        {
+            "name": "vulcan-gitleaks",
+            "description": "Finds potential secrets in source code from a Git repository using gitleaks",
+            "image": "vulcansec/vulcan-gitleaks:edge",
+            "timeout": 900,
+            "options": {
+                "branch": "",
+                "depth": 1
+            },
+            "required_vars": [
+                "GITHUB_ENTERPRISE_ENDPOINT",
+                "GITHUB_ENTERPRISE_TOKEN"
+            ],
+            "assets": [
+                "GitRepository"
+            ]
+        },
+        {
+            "name": "vulcan-http-headers",
+            "description": "Analyzes the HTTP headers using Mozilla Observatory",
+            "image": "vulcansec/vulcan-http-headers:edge",
+            "timeout": 700,
+            "required_vars": null,
+            "assets": [
+                "Hostname"
+            ]
+        },
+        {
+            "name": "vulcan-nuclei",
+            "description": "Scan web addresses with projectdiscovery/nuclei",
+            "image": "vulcansec/vulcan-nuclei:edge",
+            "timeout": 0,
+            "required_vars": null,
+            "assets": [
+                "WebAddress",
+                "Hostname"
+            ]
+        },
+        {
+            "name": "vulcan-retirejs",
+            "description": "Check web pages for vulnerable JavaScript libraries",
+            "image": "vulcansec/vulcan-retirejs:edge",
+            "timeout": 0,
+            "required_vars": null,
+            "assets": [
+                "Hostname",
+                "WebAddress"
+            ]
+        },
+        {
+            "name": "vulcan-semgrep",
+            "description": "Finds potential issues in source code from a Git repository using Semgrep",
+            "image": "vulcansec/vulcan-semgrep:edge",
+            "timeout": 7200,
+            "options": {
+                "branch": "",
+                "depth": 1,
+                "ruleset": "p/r2c-security-audit"
+            },
+            "required_vars": [
+                "GITHUB_ENTERPRISE_ENDPOINT",
+                "GITHUB_ENTERPRISE_TOKEN"
+            ],
+            "assets": [
+                "GitRepository"
+            ]
+        },
+        {
+            "name": "vulcan-trivy",
+            "description": "Scan docker images using aquasec/trivy",
+            "image": "vulcansec/vulcan-trivy:edge",
+            "timeout": 300,
+            "required_vars": [
+                "REGISTRY_DOMAIN",
+                "REGISTRY_USERNAME",
+                "REGISTRY_PASSWORD",
+                "GITHUB_ENTERPRISE_ENDPOINT",
+                "GITHUB_ENTERPRISE_TOKEN"
+            ],
+            "assets": [
+                "DockerImage",
+                "GitRepository"
+            ],
+            "options": {
+                "depth": 1,
+                "branch": "",
+                "git_checks": {
+                    "vuln": true,
+                    "secret": true,
+                    "config": true
+                },
+                "image_checks": {
+                    "vuln": true,
+                    "secret": true,
+                    "config": true
+                }
+            }
+        },
+        {
+            "name": "vulcan-wpscan",
+            "description": "Runs Wordpress scan",
+            "image": "vulcansec/vulcan-wpscan:edge",
+            "timeout": 1500,
+            "required_vars": [
+                "WPVULNDB_API_TOKEN"
+            ],
+            "assets": [
+                "Hostname"
+            ]
+        },
+        {
+            "name": "vulcan-zap",
+            "description": "Runs an OWASP ZAP passive or active scan",
+            "image": "vulcansec/vulcan-zap:edge",
+            "timeout": 36000,
+            "options": {
+                "active": true,
+                "depth": 2,
+                "disabled_scanners": [
+                    "10062",
+                    "10003",
+                    "10108"
+                ],
+                "ignored_fingerprint_scanners": [
+                    "40018"
+                ],
+                "max_rule_duration": 0,
+                "max_scan_duration": 0,
+                "max_spider_duration": 0,
+                "min_score": 0,
+                "openapi_host": "",
+                "openapi_url": ""
+            },
+            "required_vars": null,
+            "assets": [
+                "WebAddress"
+            ]
+        }
+    ]
+}

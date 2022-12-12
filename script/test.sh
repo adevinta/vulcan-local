@@ -15,7 +15,7 @@ echo "Test based on yaml config using internal-static policy"
 echo "exit=$?"
 
 echo "Test local path as a git repository excluding the github check"
-./vulcan-local -t . -e github -checktypes ./resources/checktypes-stable.json
+./vulcan-local -t . -e github -checktypes ./resources/checktypes.json
 echo "exit=$?"
 
 # Add a path and a tag to bypass check target validations.
