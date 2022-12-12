@@ -147,6 +147,16 @@
             "assets": [
                 "WebAddress"
             ]
+        },
+        {
+            "name": "vulcan-exposed-http-resources",
+            "description": "Tests if a given web address exposes sensitive resources",
+            "image": "vulcansec/vulcan-exposed-http-resources:edge",
+            "timeout": 0,
+            "required_vars": null,
+            "assets": [
+                "WebAddress"
+            ]
         }
     ]
 }

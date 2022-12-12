@@ -13,5 +13,3 @@ policies:
       - type: vulcan-retirejs
       - type: vulcan-zap
       - type: vulcan-exposed-http-resources
-      - type: vulcan-exposed-http
-      - type: vulcan-exposed-files
