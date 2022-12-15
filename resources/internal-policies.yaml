@@ -1,0 +1,19 @@
+policies:
+  - name: internal-static
+    checks:
+      - type: vulcan-gitleaks
+        options:
+          branch: ""
+          depth: 1
+      - type: vulcan-trivy
+      - type: vulcan-semgrep
+
+  - name: internal-web
+    checks:
+      - type: vulcan-retirejs
+      - type: vulcan-zap
+      - type: vulcan-exposed-http-resources
+      - type: vulcan-nuclei
+        options:
+          template_exclusion_list:
+          - "none"

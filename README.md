@@ -152,7 +152,7 @@ This is a very simple config file with two checks:
 ```yaml
 conf:
   repositories:
-    - ./script/checktypes-stable.json
+    - ./resources/checktypes.json
 
 # List of targets to scan generating checks from all available checktypes
 targets:
@@ -197,19 +197,30 @@ reporting:
 
 ### Policies
 
-Policies for vulcan-local are intended to abstract the overhead selecting the checks and options to scan any valid target.
+Policies in vulcan-local are intended to abstract the overhead selecting checks and options to scan a given target. By default, policies are loaded from the [internal-policies.yaml](https://raw.githubusercontent.com/adevinta/vulcan-local/master/resources/internal-policies.yaml) file.
 
-A local or remote file can be configured to load policies, and then the policy to apply can be set using the parameter `-p`, for example:
+Use `-p` to set a policy for the scan. Existing default policies are:
+|Policy|Checks included|Target Asset Type|
+|--|--|--|
+|`internal-static`|[vulcan-semgrep](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-semgrep)<br> [vulcan-gitleaks](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-gitleaks)<br>[vulcan-trivy](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-trivy)| Git repository <br>Directory|
+|`internal-web`|[vulcan-retirejs](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-retirejs)<br>[vulcan-zap](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-zap)<br>[vulcan-exposed-http-resources](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-http-resources)<br>[vulcan-exposed-http](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-http)<br>[vulcan-exposed-files](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-files)| URL<br>Hostname |
+
+Example:
+```sh
+vulcan-local -p internal-static -t .
+```
+
+Custom policies can be also loaded from a configuration file (local or remote) using `-c` , and then the policy to apply can be set using the parameter `-p`, for example:
 
 ```sh
 # Configuration file set through an env variable
-export VULCAN_CONFIG=https://raw.githubusercontent.com/adevinta/vulcan-local/master/script/vulcan-policies.yaml
+export VULCAN_CONFIG=https://example.com/custom-policies.yaml
+# Run vulcan-local with 'my-policy'
+vulcan-local -p my-policy -t .
 
-# Run vulcan-local with the lightweight policy
-vulcan-local -c vulcan.yaml -p lightweight
+# or just
+vulcan-local -c ./custom-policies.yaml -p my-policy -t .
 ```
-
-_This feature is under development, and existing policies were created just for testing purposes._
 
 ## Running custom checks
 
@@ -282,13 +293,16 @@ Start scanning a local http server
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
     -v $PWD/script:/app/script \
-    vulcan-local -t http://localhost:1234 -checktypes /app/script/checktypes-stable.json
+    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
+    -v $PWD/resources:/app/resources \
+    -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
+    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
 ```
 
 Start scanning a local Git repository. **The target path must point to the base of a git repository.**
 
 ```sh
 docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $PWD/script:/app/script -v $PWD:/src \
-  vulcan-local -t /src -checktypes /app/script/checktypes-stable.json
+  -v $PWD/resources:/app/resources -v $PWD:/src \
+  vulcan-local -t /src -checktypes /app/resources/checktypes.json
 ```
