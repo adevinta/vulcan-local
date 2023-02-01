@@ -5,7 +5,7 @@ go 1.19
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
-	github.com/adevinta/vulcan-agent v1.0.1
+	github.com/adevinta/vulcan-agent v1.0.2
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.0.0
 	github.com/docker/docker v20.10.23+incompatible
@@ -38,7 +38,7 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/adevinta/vulcan-metrics-client v1.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.149 // indirect
-	github.com/docker/cli v20.10.21+incompatible // indirect
+	github.com/docker/cli v20.10.23+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -63,8 +63,8 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
