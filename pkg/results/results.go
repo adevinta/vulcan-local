@@ -10,13 +10,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"sync"
 
 	"github.com/adevinta/vulcan-agent/log"
 	report "github.com/adevinta/vulcan-report"
 	"github.com/julienschmidt/httprouter"
-	"github.com/phayes/freeport"
 )
 
 type ReportPayload struct {
@@ -39,10 +39,11 @@ type ResultsServer struct {
 }
 
 func Start(l log.Logger) (*ResultsServer, error) {
-	port, err := freeport.GetFreePort()
+	listener, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
 		return nil, err
 	}
+	port := listener.Addr().(*net.TCPAddr).Port
 
 	// The service has to be accesible just by this same go process. No need to expose on all interfaces
 	addr := fmt.Sprintf("localhost:%d", port)
@@ -62,7 +63,7 @@ func Start(l log.Logger) (*ResultsServer, error) {
 	r.server = &http.Server{Addr: addr, Handler: router}
 	l.Debugf("Starting results server on %s", endpoint)
 	go func() {
-		err := r.server.ListenAndServe()
+		err := r.server.Serve(listener)
 		r.done <- err
 		close(r.done)
 	}()

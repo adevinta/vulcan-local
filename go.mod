@@ -11,6 +11,7 @@ require (
 	github.com/docker/docker v20.10.23+incompatible
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.5.2
+	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/imdario/mergo v0.3.13
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
@@ -18,15 +19,8 @@ require (
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.9.0
 	github.com/p4tin/goaws v1.1.2
-	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/sirupsen/logrus v1.9.0
 	gopkg.in/yaml.v3 v3.0.1
-)
-
-require (
-	github.com/cloudflare/circl v1.1.0 // indirect
-	github.com/pjbgf/sha1cd v0.2.3 // indirect
-	github.com/skeema/knownhosts v1.1.0 // indirect
 )
 
 require (
@@ -38,6 +32,7 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/adevinta/vulcan-metrics-client v1.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.149 // indirect
+	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/docker/cli v20.10.23+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
@@ -48,7 +43,6 @@ require (
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -58,8 +52,10 @@ require (
 	github.com/miekg/dns v1.1.49 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/pjbgf/sha1cd v0.2.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect

@@ -7,6 +7,7 @@ package sqsservice
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,7 +18,6 @@ import (
 	"github.com/p4tin/goaws/app/conf"
 	"github.com/p4tin/goaws/app/gosqs"
 	"github.com/p4tin/goaws/app/router"
-	"github.com/phayes/freeport"
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,10 +46,11 @@ func Start(l log.Logger) (*SQSServer, error) {
 	// This sets the loglevel for gosqs
 	logrus.SetLevel(logrus.ErrorLevel)
 
-	port, err := freeport.GetFreePort()
+	listener, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
-		return nil, fmt.Errorf("unable to find a port %+v", err)
+		return nil, err
 	}
+	port := listener.Addr().(*net.TCPAddr).Port
 
 	{ // Configure goaaws trough a temp config file.
 		goaConfig := strings.ReplaceAll(goa, "${PORT}", strconv.Itoa(port))
@@ -76,7 +77,7 @@ func Start(l log.Logger) (*SQSServer, error) {
 
 	l.Debugf("Starting sqs server on %s", endpoint)
 	go func() {
-		http.ListenAndServe(addr, router.New())
+		http.Serve(listener, router.New())
 	}()
 
 	quit := make(chan struct{})

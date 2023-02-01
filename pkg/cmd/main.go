@@ -28,7 +28,6 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	"github.com/adevinta/vulcan-local/pkg/sqsservice"
-	"github.com/phayes/freeport"
 	"github.com/sirupsen/logrus"
 )
 
@@ -124,12 +123,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		return config.ErrorExitCode, fmt.Errorf("unable to send jobs to queue %+v", err)
 	}
 
-	apiPort, err := freeport.GetFreePort()
-	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to find a port for agent api %+v", err)
-	}
-	log.Debugf("Setting agent server on http://%s:%d/", agentIP, apiPort)
-
 	auths := []agentconfig.Auth{}
 	for _, r := range cfg.Conf.Registries {
 		if r.Server == "" || r.Username == "" || r.Password == "" {
@@ -164,7 +157,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		},
 		API: agentconfig.APIConfig{
 			Host: agentIP,
-			Port: fmt.Sprintf(":%d", apiPort),
 		},
 		Check: agentconfig.CheckConfig{
 			Vars: cfg.Conf.Vars,
