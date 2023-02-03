@@ -241,7 +241,7 @@ func ReadConfig(url string, cfg *Config, l log.Logger) error {
 	if err != nil {
 		return fmt.Errorf("unable to decode yaml %s: %w", url, err)
 	}
-	if err = mergo.Merge(cfg, newConfig, mergo.WithTransformers(sliceAppenderTransformer{})); err != nil {
+	if err = mergo.Merge(cfg, newConfig, mergo.WithTransformers(sliceAppenderTransformer{}), mergo.WithOverride); err != nil {
 		return fmt.Errorf("unable to merge config %s: %w", url, err)
 	}
 	l.Infof("Loaded config from url=%s", url)
