@@ -7,6 +7,7 @@ package gitservice
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
@@ -79,7 +80,11 @@ func (gs *gitService) AddGit(path string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	r.port = listener.Addr().(*net.TCPAddr).Port
+	a, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		return 0, fmt.Errorf("unable to get a TCPAddr")
+	}
+	r.port = a.Port
 	gs.wg.Add(1)
 	gs.log.Debugf("Starting git server path=%s port=%d", path, r.port)
 	go func() {

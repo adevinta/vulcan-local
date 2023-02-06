@@ -50,7 +50,11 @@ func Start(l log.Logger) (*SQSServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	port := listener.Addr().(*net.TCPAddr).Port
+	a, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		return nil, fmt.Errorf("unable to get a TCPAddr")
+	}
+	port := a.Port
 
 	{ // Configure goaaws trough a temp config file.
 		goaConfig := strings.ReplaceAll(goa, "${PORT}", strconv.Itoa(port))

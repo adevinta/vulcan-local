@@ -43,7 +43,11 @@ func Start(l log.Logger) (*ResultsServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	port := listener.Addr().(*net.TCPAddr).Port
+	a, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		return nil, fmt.Errorf("unable to get a TCPAddr")
+	}
+	port := a.Port
 
 	// The service has to be accesible just by this same go process. No need to expose on all interfaces
 	addr := fmt.Sprintf("localhost:%d", port)
