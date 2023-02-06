@@ -7,7 +7,6 @@ package config
 import (
 	"fmt"
 	neturl "net/url"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -241,24 +240,9 @@ func ReadConfig(url string, cfg *Config, l log.Logger) error {
 	if err != nil {
 		return fmt.Errorf("unable to decode yaml %s: %w", url, err)
 	}
-	if err = mergo.Merge(cfg, newConfig, mergo.WithTransformers(sliceAppenderTransformer{})); err != nil {
+	if err = mergo.Merge(cfg, newConfig, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
 		return fmt.Errorf("unable to merge config %s: %w", url, err)
 	}
 	l.Infof("Loaded config from url=%s", url)
-	return nil
-}
-
-type sliceAppenderTransformer struct {
-}
-
-func (t sliceAppenderTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
-	if typ.Kind() == reflect.Slice {
-		return func(dst, src reflect.Value) error {
-			if dst.CanSet() {
-				dst.Set(reflect.AppendSlice(dst, src))
-			}
-			return nil
-		}
-	}
 	return nil
 }
