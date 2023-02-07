@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -21,7 +22,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/jesusfcr/gittp"
 	"github.com/otiai10/copy"
-	"github.com/phayes/freeport"
 )
 
 type GitService interface {
@@ -71,24 +71,27 @@ func (gs *gitService) AddGit(path string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	port, err := freeport.GetFreePort()
-	if err != nil {
-		return 0, err
-	}
-
 	r := gitMapping{
-		port:   port,
-		server: &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", port), Handler: handle},
+		server: &http.Server{Handler: handle},
 		tmpDir: tmpDir,
 	}
 	gs.mappings[path] = &r
+	listener, err := net.Listen("tcp", "0.0.0.0:0")
+	if err != nil {
+		return 0, err
+	}
+	a, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		return 0, fmt.Errorf("unable to get a TCPAddr")
+	}
+	r.port = a.Port
 	gs.wg.Add(1)
-	gs.log.Debugf("Starting git server path=%s port=%d", path, port)
+	gs.log.Debugf("Starting git server path=%s port=%d", path, r.port)
 	go func() {
-		r.server.ListenAndServe()
+		r.server.Serve(listener)
 		defer gs.wg.Done()
 	}()
-	return port, nil
+	return r.port, nil
 }
 
 func (gs *gitService) Shutdown() {
