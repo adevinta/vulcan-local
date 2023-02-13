@@ -165,6 +165,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			ARN:               sqs.ArnChecks,
 			PollingInterval:   3,
 			VisibilityTimeout: 120,
+			ProcessQuantum:    90,
 		},
 		SQSWriter: agentconfig.SQSWriter{
 			Endpoint: sqs.Endpoint,

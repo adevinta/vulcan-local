@@ -27,7 +27,7 @@ Local:
   Port: ${PORT}
   AccountId: "${ACCOUNTID}"
   QueueAttributeDefaults:
-    VisibilityTimeout: 30
+    VisibilityTimeout: 120
     ReceiveMessageWaitTimeSeconds: 0
   Queues:
     - Name: Checks
