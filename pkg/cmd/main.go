@@ -35,6 +35,19 @@ const defaultDockerHost = "host.docker.internal"
 
 var execCommand = exec.Command
 
+func GetFreePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
 
@@ -135,6 +148,11 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			Pass:   r.Password,
 		})
 	}
+
+	agentPort, err := GetFreePort()
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to get a free port for agent %+v", err)
+	}
 	agentConfig := agentconfig.Config{
 		Agent: agentconfig.AgentConfig{
 			ConcurrentJobs:         cfg.Conf.Concurrency,
@@ -157,6 +175,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		},
 		API: agentconfig.APIConfig{
 			Host: agentIP,
+			Port: fmt.Sprintf(":%d", agentPort),
 		},
 		Check: agentconfig.CheckConfig{
 			Vars: cfg.Conf.Vars,
