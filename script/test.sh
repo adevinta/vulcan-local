@@ -15,7 +15,7 @@ echo "Test based on yaml config using internal-static policy"
 echo "exit=$?"
 
 echo "Test local path as a git repository excluding the github check"
-./vulcan-local -t . -e github -checktypes ./resources/checktypes.json
+./vulcan-local -t . -e github
 echo "exit=$?"
 
 # Add a path and a tag to bypass check target validations.
@@ -25,14 +25,14 @@ echo "Test local docker image"
 echo "exit=$?"
 
 echo "Docker test based on yaml config"
-docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock  \
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock  \
     -v "$PWD":/target -e TRAVIS_BUILD_DIR=/target \
     -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
     vulcan-local -c /target/vulcan.yaml -i retirejs
 echo "exit=$?"
 
 echo "Docker test local app as a webaddress excluding nessus and zap"
-docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock  \
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock  \
     -v "$PWD":/target \
     -e TRAVIS_BUILD_DIR=/target -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
     vulcan-local -t http://localhost:1234 -e '(nessus|zap)'

@@ -282,27 +282,22 @@ docker run -p 1234:8000 --restart unless-stopped -d appsecco/dsvw
 Start scan using a local config file
 
 ```sh
-docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $PWD:/app \
-    -e TRAVIS_BUILD_DIR=/app -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -c /app/vulcan.yaml
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $PWD:/target \
+    -e TRAVIS_BUILD_DIR=/target -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
+    vulcan-local -c /target/vulcan.yaml
 ```
 
 Start scanning a local http server
 
 ```sh
-docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $PWD/script:/app/script \
-    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
-    -v $PWD/resources:/app/resources \
-    -e REGISTRY_SERVER -e REGISTRY_USERNAME -e REGISTRY_PASSWORD \
-    vulcan-local -t http://localhost:1234 -checktypes /app/resources/checktypes.json
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    vulcan-local -t http://localhost:1234
 ```
 
-Start scanning a local Git repository. **The target path must point to the base of a git repository.**
+Start scanning a local directory
 
 ```sh
-docker run -i --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $PWD/resources:/app/resources -v $PWD:/src \
-  vulcan-local -t /src -checktypes /app/resources/checktypes.json
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/src \
+  vulcan-local -t /src
 ```
