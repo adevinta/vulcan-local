@@ -319,6 +319,10 @@ func getAgentIP(ifacename string, log agentlog.Logger) string {
 }
 
 func getHostIP(l agentlog.Logger) string {
+	if runtime.GOOS == "darwin" {
+		return defaultDockerHost
+	}
+
 	cmd := exec.Command("docker", "run", "--rm", "busybox:1.34.1", "sh", "-c", "ip route|awk '/default/ { print $3 }'")
 	var cmdOut bytes.Buffer
 	cmd.Stdout = &cmdOut
