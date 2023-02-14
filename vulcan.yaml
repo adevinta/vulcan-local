@@ -10,9 +10,6 @@ conf:
     REGISTRY_USERNAME: ${REGISTRY_USERNAME}
     REGISTRY_PASSWORD: ${REGISTRY_PASSWORD}
 
-  repositories:
-    - ${TRAVIS_BUILD_DIR:-.}/resources/checktypes.json
-
   # Registry credentials to pull checks from private registries
   registries:
     - server: ${REGISTRY_SERVER}
