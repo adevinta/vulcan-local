@@ -66,7 +66,7 @@ func main() {
 		Checks:     []config.Check{},
 	}
 
-	cmdTargets := []*config.Target{}
+	cmdTargets := []config.Target{}
 	cmdRepositories := []string{}
 	cmdConfigs := []string{}
 	cmdVars := map[string]string{}
@@ -102,7 +102,7 @@ func main() {
 	flag.StringVar(&cfg.Conf.Include, "i", cfg.Conf.Include, "include checktype regex")
 	flag.StringVar(&cfg.Conf.Exclude, "e", cfg.Conf.Exclude, "exclude checktype regex")
 	flag.Func("t", genFlagMsg("target to scan", ".", "", "", nil), func(s string) error {
-		cmdTargets = append(cmdTargets, &config.Target{
+		cmdTargets = append(cmdTargets, config.Target{
 			Target: s,
 		})
 		return nil
@@ -196,6 +196,9 @@ func main() {
 			}
 		}
 		// Overwrite the yaml config with the command line flags.
+		// Prevent adding targets and repositories twice
+		cmdTargets = []config.Target{}
+		cmdRepositories = []string{}
 		flag.Parse()
 	}
 	if repo := os.Getenv(envDefaultChecktypesUri); repo != "" {
@@ -225,9 +228,13 @@ func main() {
 
 	// Overwrite config targets in case of command line targets
 	if len(cmdTargets) > 0 {
-		cfg.Targets = []config.Target{}
-		for i := range cmdTargets {
-			cfg.Targets = append(cfg.Targets, *cmdTargets[i])
+		if len(cfg.Targets) > 0 {
+			log.Warn("Replacing targets in config files with command line ones.")
+		}
+		cfg.Targets = cmdTargets
+		if len(cfg.Checks) > 0 {
+			log.Warn("Ignoring custom checks in config files.")
+			cfg.Checks = nil
 		}
 	}
 
