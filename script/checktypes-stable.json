@@ -63,7 +63,7 @@
             "name": "vulcan-semgrep",
             "description": "Finds potential issues in source code from a Git repository using Semgrep",
             "image": "vulcansec/vulcan-semgrep:edge",
-            "timeout": 7200,
+            "timeout": 630,
             "options": {
                 "branch": "",
                 "depth": 1,
@@ -72,7 +72,7 @@
                 "ruleset": [
                     "p/r2c-security-audit"
                 ],
-                "timeout": 0
+                "timeout": 600
             },
             "required_vars": [
                 "GITHUB_ENTERPRISE_ENDPOINT",
