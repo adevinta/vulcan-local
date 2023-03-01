@@ -92,7 +92,7 @@ vulcan-local -t https://wordpress.org -i wpscan -v WPVULNDB_API_TOKEN=$WPVULNDB_
 Also the tool can be used to scan remote resources.
 
 ```sh
-# Scan a list of assets for CRITICAL vulns with trivy exporting the results in json. 
+# Scan a list of assets for CRITICAL vulns with trivy exporting the results in json.
 cat myimages.txt | awk '{print "-t " $0 " -a DockerImage"}' \
   | xargs -p vulcan-local -i trivy -s CRITICAL -r report.json
 
@@ -123,11 +123,11 @@ execution of the pipelines. See example below.
 #!/bin/bash
 
 # Exit the script in case of error
-set -e   
+set -e
 
 docker build . -t example.com/org/myimg:latest
 
-# Exit script in case of CRITICAL/HIGH vulnerabilities 
+# Exit script in case of CRITICAL/HIGH vulnerabilities
 vulcan-local -t . -t example.com/org/myimg:latest -s HIGH
 
 docker push example.com/org/myimg:latest
