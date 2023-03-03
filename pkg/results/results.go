@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -84,7 +84,7 @@ func (srv *ResultsServer) Shutdown() {
 }
 
 func (srv *ResultsServer) handleReport(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Write([]byte(err.Error()))
@@ -125,7 +125,7 @@ func (srv *ResultsServer) handleReport(w http.ResponseWriter, r *http.Request, p
 }
 
 func (srv *ResultsServer) handleLogs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		w.Write([]byte(err.Error()))
