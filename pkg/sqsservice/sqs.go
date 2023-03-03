@@ -6,7 +6,6 @@ package sqsservice
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -59,7 +58,7 @@ func Start(l log.Logger) (*SQSServer, error) {
 	{ // Configure goaaws trough a temp config file.
 		goaConfig := strings.ReplaceAll(goa, "${PORT}", strconv.Itoa(port))
 		goaConfig = strings.ReplaceAll(goaConfig, "${ACCOUNTID}", accountId)
-		tmpFile, err := ioutil.TempFile(os.TempDir(), "")
+		tmpFile, err := os.CreateTemp(os.TempDir(), "")
 		if err != nil {
 			return nil, fmt.Errorf("unable to create tmpfile %+v", err)
 		}

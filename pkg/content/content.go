@@ -7,9 +7,10 @@ package content
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -44,7 +45,7 @@ func Download(u *url.URL) ([]byte, error) {
 		if res.Body != nil {
 			defer res.Body.Close()
 		}
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read uri %s: %w", u, err)
 		}
@@ -56,7 +57,7 @@ func Download(u *url.URL) ([]byte, error) {
 		// That's the reason we are trimming directly the url string and not
 		// using the path fragment of the parsed URL.
 		path := strings.TrimPrefix(u.String(), "file://")
-		body, err := ioutil.ReadFile(path)
+		body, err := os.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read file %s: %w", u, err)
 		}
