@@ -203,7 +203,7 @@ Use `-p` to set a policy for the scan. Existing default policies are:
 |Policy|Checks included|Target Asset Type|
 |--|--|--|
 |`internal-static`|[vulcan-semgrep](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-semgrep)<br> [vulcan-gitleaks](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-gitleaks)<br>[vulcan-trivy](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-trivy)| Git repository <br>Directory|
-|`internal-web`|[vulcan-retirejs](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-retirejs)<br>[vulcan-zap](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-zap)<br>[vulcan-exposed-http-resources](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-http-resources)<br>[vulcan-exposed-http](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-http)<br>[vulcan-exposed-files](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-files)| URL<br>Hostname |
+|`internal-web`|[vulcan-retirejs](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-retirejs)<br>[vulcan-zap](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-zap)<br>[vulcan-exposed-http](https://github.com/adevinta/vulcan-checks/tree/master/cmd/vulcan-exposed-http)| URL<br>Hostname |
 
 Example:
 ```sh
