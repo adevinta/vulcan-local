@@ -41,7 +41,14 @@
             "name": "vulcan-nuclei",
             "description": "Scan web addresses with projectdiscovery/nuclei",
             "image": "vulcansec/vulcan-nuclei:edge",
-            "timeout": 0,
+            "timeout": 1800,
+            "options": {
+                "tag_exclusion_list": [
+                    "intrusive",
+                    "dos",
+                    "fuzz"
+                ]
+            },
             "required_vars": null,
             "assets": [
                 "WebAddress",
@@ -152,16 +159,5 @@
             "assets": [
                 "WebAddress"
             ]
-        },
-        {
-            "name": "vulcan-exposed-http-resources",
-            "description": "Tests if a given web address exposes sensitive resources",
-            "image": "vulcansec/vulcan-exposed-http-resources:edge",
-            "timeout": 0,
-            "required_vars": null,
-            "assets": [
-                "WebAddress"
-            ]
         }
-    ]
 }

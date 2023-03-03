@@ -12,7 +12,6 @@ policies:
     checks:
       - type: vulcan-retirejs
       - type: vulcan-zap
-      - type: vulcan-exposed-http-resources
       - type: vulcan-nuclei
         options:
           template_exclusion_list:
