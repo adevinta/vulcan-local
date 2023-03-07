@@ -111,7 +111,7 @@ func main() {
 		if len(cmdTargets) == 0 {
 			return fmt.Errorf("missing target")
 		}
-		lastTarget := cmdTargets[len(cmdTargets)-1]
+		lastTarget := &cmdTargets[len(cmdTargets)-1]
 		if lastTarget.AssetType != "" {
 			return fmt.Errorf("asset type already defined for %s", lastTarget.Target)
 		}
@@ -122,7 +122,7 @@ func main() {
 		if len(cmdTargets) == 0 {
 			return fmt.Errorf("missing target")
 		}
-		lastTarget := cmdTargets[len(cmdTargets)-1]
+		lastTarget := &cmdTargets[len(cmdTargets)-1]
 		if lastTarget.Options != nil {
 			return fmt.Errorf("options already defined for target %s", lastTarget.Target)
 		}
