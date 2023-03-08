@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -347,6 +348,39 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
 		rc.HostConfig.Binds = append(rc.HostConfig.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+		// check if the target is a file and build if it is
+		_, err := os.Stat(params.Target)
+		if err == nil {
+			currentDirectory, err := os.Getwd()
+			if err != nil {
+				currentDirectory = ""
+			}
+			targetName := filepath.Base(currentDirectory) + "_" + strings.ReplaceAll(params.Target, "/", "_") + ":latest"
+			targetName = strings.ToLower(targetName)
+			log.Debugf("Building docker image from file=" + params.Target)
+			cmd := exec.Command("docker", "build", "-t", targetName, "-f", params.Target, ".")
+			var cmdOut bytes.Buffer
+			var stdErr bytes.Buffer
+			cmd.Stdout = &cmdOut
+			cmd.Stderr = &stdErr
+			err = cmd.Run()
+			if err != nil {
+				log.Errorf("Error building docker %v %v", err, cmdOut.String())
+				log.Debugf("Error:%v", stdErr.String())
+				log.Debugf("Docker image build with tag " + targetName)
+			} else {
+				log.Debugf("%v", stdErr.String())
+				check := getCheckByID(checks, params.CheckID)
+				if check == nil {
+					log.Errorf("check not found id=%s", params.CheckID)
+					return nil
+				}
+				newTarget = targetName
+				log.Debugf("swaping target=%s new=%s check=%s", params.Target, newTarget, params.CheckID)
+				check.NewTarget = newTarget
+				rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, backend.CheckTargetVar, newTarget)
+			}
+		}
 
 		// Some checks will fail because the reachability check as they
 		// expect remote urls. This will bypass the check
