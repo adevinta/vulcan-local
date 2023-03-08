@@ -1,0 +1,31 @@
+conf:
+  # Variables needed by some checks.
+  vars:
+    # Credentials for cloning private repositories
+    GITHUB_ENTERPRISE_ENDPOINT: ${GITHUB_ENTERPRISE_ENDPOINT}
+    GITHUB_ENTERPRISE_TOKEN: ${GITHUB_ENTERPRISE_TOKEN}
+
+    # Credentials to pass to the checks to pull private images
+    REGISTRY_DOMAIN: ${REGISTRY_SERVER}
+    REGISTRY_USERNAME: ${REGISTRY_USERNAME}
+    REGISTRY_PASSWORD: ${REGISTRY_PASSWORD}
+
+  # Registry credentials to pull checks from private registries
+  registries:
+    - server: ${REGISTRY_SERVER}
+      username: ${REGISTRY_USERNAME}
+      password: ${REGISTRY_PASSWORD}
+
+  # *Always*, Never, IfNotPresent
+  pullPolicy: IfNotPresent
+
+  # Number of checks to run concurrently
+  concurrency: 5
+
+targets:
+
+  - target: ${DOCKER_IMAGE:-Dockerfile}
+    assetType: DockerImage
+
+  - target: ${DOCKER_IMAGE:-resources/Dockerfile_2}
+    assetType: DockerImage

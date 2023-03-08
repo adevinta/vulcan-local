@@ -24,6 +24,10 @@ echo "Test local docker image"
 ./vulcan-local -t path/vulcan-local:xxx -a DockerImage -i trivy
 echo "exit=$?"
 
+echo "Test build docker image from Dockerfile"
+./vulcan-local -t Dockerfile -a DockerImage -i trivy
+echo "exit=$?"
+
 echo "Docker test based on yaml config"
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock  \
     -v "$PWD":/target -e TRAVIS_BUILD_DIR=/target \
