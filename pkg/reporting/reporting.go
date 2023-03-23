@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -21,12 +22,14 @@ import (
 )
 
 func isExcluded(v *ExtendedVulnerability, ex *[]checktypes.Exclusion) bool {
-	for _, e := range *ex {
-		if strings.Contains(v.Target, e.Target) &&
-			strings.Contains(v.Summary, e.Summary) &&
-			strings.Contains(v.Fingerprint, e.Fingerprint) &&
-			(strings.Contains(v.AffectedResource, e.AffectedResource) || strings.Contains(v.AffectedResourceString, e.AffectedResource)) {
-			return true
+	if !reflect.ValueOf(ex).IsZero() {
+		for _, e := range *ex {
+			if strings.Contains(v.Target, e.Target) &&
+				strings.Contains(v.Summary, e.Summary) &&
+				strings.Contains(v.Fingerprint, e.Fingerprint) &&
+				(strings.Contains(v.AffectedResource, e.AffectedResource) || strings.Contains(v.AffectedResourceString, e.AffectedResource)) {
+				return true
+			}
 		}
 	}
 	return false
@@ -56,7 +59,6 @@ func updateReport(e *ExtendedVulnerability, c *config.Check) {
 
 func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.Logger) []ExtendedVulnerability {
 	vulns := []ExtendedVulnerability{}
-
 	for _, check := range cfg.Checks {
 		// The check was filtered
 		if check.Id == "" {
@@ -68,7 +70,6 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 		if !ok {
 			continue
 		}
-
 		for i := range r.Vulnerabilities {
 			v := r.Vulnerabilities[i]
 			extended := ExtendedVulnerability{

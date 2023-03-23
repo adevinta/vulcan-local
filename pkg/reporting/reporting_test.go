@@ -40,7 +40,7 @@ func TestIsExcluded(t *testing.T) {
 	tests := []struct {
 		name                  string
 		extendedVulnerability *ExtendedVulnerability
-		exlusions             []config.Exclusion
+		exlusions             []checktypes.Exclusion
 		want                  bool
 		wantErr               error
 	}{
@@ -65,7 +65,7 @@ func TestIsExcluded(t *testing.T) {
 				},
 				Excluded: false,
 			},
-			exlusions: []config.Exclusion{
+			exlusions: []checktypes.Exclusion{
 				{
 					Target: "appsecco/dsvw:latest",
 				},
@@ -95,7 +95,7 @@ func TestIsExcluded(t *testing.T) {
 				},
 				Excluded: false,
 			},
-			exlusions: []config.Exclusion{
+			exlusions: []checktypes.Exclusion{
 				{
 					Target: "abc/dsvw:latest",
 				},
