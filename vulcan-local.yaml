@@ -1,0 +1,16 @@
+conf:
+  repositories:
+    - resources/checktypes.json
+
+# List of targets to scan generating checks from all available checktypes
+targets:
+  - target: .
+  - target: local/docker-target:latest
+    assetType: DockerImage
+
+# Vulcan has a lot of options. Specially interesting are the ones related with exclusions.
+# For more information look up this URL: https://confluence.mpi-internal.com/display/ST/Vulcan-local+resources#Vulcanlocalresources-Howcreateanexclusion?
+reporting:
+  exclusions:
+    - affectedResource: Dockerfile
+    - affected:SDAdesource: Dockerfile

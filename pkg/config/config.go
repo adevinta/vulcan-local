@@ -80,19 +80,11 @@ type Conf struct {
 	Policy       string
 }
 
-type Exclusion struct {
-	Target           string `yaml:"target"`
-	Summary          string `yaml:"summary"`
-	AffectedResource string `yaml:"affectedResource"`
-	Fingerprint      string `yaml:"fingerprint"`
-	Description      string `yaml:"description"`
-}
-
 type Reporting struct {
-	Severity   Severity    `yaml:"severity"`
-	Format     string      `yaml:"format"`
-	OutputFile string      `yaml:"outputFile"`
-	Exclusions []Exclusion `yaml:"exclusions"`
+	Severity   Severity                `yaml:"severity"`
+	Format     string                  `yaml:"format"`
+	OutputFile string                  `yaml:"outputFile"`
+	Exclusions *[]checktypes.Exclusion `yaml:"exclusions"`
 }
 
 type Severity int

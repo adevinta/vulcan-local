@@ -161,4 +161,11 @@
             ]
         }
     ]
+    ,
+    "exclusions":[
+        {"affectsource":"asd"},
+        {"affected_resource":"asd2"},
+        {"affected_resource":"asd3"}
+    ]
+
 }

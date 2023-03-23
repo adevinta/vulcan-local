@@ -14,12 +14,13 @@ import (
 	"time"
 
 	"github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	report "github.com/adevinta/vulcan-report"
 )
 
-func isExcluded(v *ExtendedVulnerability, ex *[]config.Exclusion) bool {
+func isExcluded(v *ExtendedVulnerability, ex *[]checktypes.Exclusion) bool {
 	for _, e := range *ex {
 		if strings.Contains(v.Target, e.Target) &&
 			strings.Contains(v.Summary, e.Summary) &&
@@ -76,7 +77,7 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 				Severity:      config.FindSeverityByScore(v.Score).Data(),
 			}
 			updateReport(&extended, &check)
-			extended.Excluded = isExcluded(&extended, &cfg.Reporting.Exclusions)
+			extended.Excluded = isExcluded(&extended, cfg.Reporting.Exclusions)
 			vulns = append(vulns, extended)
 		}
 	}
@@ -86,7 +87,7 @@ func parseReports(reports map[string]*report.Report, cfg *config.Config, l log.L
 // checkExclusionDescriptions checks that the exlusions have the description
 func checkExclusionDescriptions(cfg *config.Config, l log.Logger) {
 
-	for _, e := range cfg.Reporting.Exclusions {
+	for _, e := range *cfg.Reporting.Exclusions {
 		if e.Description == "" {
 			l.Infof("Missing description for the exclusion:\n"+
 				" - Target: %s\n"+

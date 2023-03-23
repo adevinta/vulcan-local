@@ -67,11 +67,18 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			return config.ErrorExitCode, fmt.Errorf("invalid exclude regexp: %w", err)
 		}
 	}
+	exclusions, err := checktypes.ExclusionsImport(cfg.Conf.Repositories, log)
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to load repositories: %w", err)
+	}
+	*cfg.Reporting.Exclusions = append(*cfg.Reporting.Exclusions, exclusions...)
+
 	checktypes, err := checktypes.Import(cfg.Conf.Repositories, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to load repositories: %w", err)
 	}
 	cfg.CheckTypes = checktypes
+
 	if err = generator.ComputeTargets(cfg, log); err != nil {
 		return config.ErrorExitCode, err
 	}
