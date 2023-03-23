@@ -69,7 +69,6 @@ func exclusionsFromJSON(u *neturl.URL, l log.Logger) ([]Exclusion, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(jexclusions.Exclusions)
 	l.Debugf("Loaded exclusions from url=%s, number of exclusions loaded=%d", u.String(), len(jexclusions.Exclusions))
 	return jexclusions.Exclusions, nil
 }

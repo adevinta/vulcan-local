@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -73,6 +74,14 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 	*cfg.Reporting.Exclusions = append(*cfg.Reporting.Exclusions, exclusions...)
 
+	// delete empty elements
+	var final_exclusions []checktypes.Exclusion
+	for _, v := range *cfg.Reporting.Exclusions {
+		if !reflect.ValueOf(v).IsZero() {
+			final_exclusions = append(final_exclusions, v)
+		}
+	}
+	*cfg.Reporting.Exclusions = final_exclusions
 	checktypes, err := checktypes.Import(cfg.Conf.Repositories, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to load repositories: %w", err)
