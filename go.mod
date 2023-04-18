@@ -7,7 +7,7 @@ go 1.19
 require (
 	github.com/adevinta/vulcan-agent v1.0.2
 	github.com/adevinta/vulcan-report v1.0.0
-	github.com/adevinta/vulcan-types v1.0.0
+	github.com/adevinta/vulcan-types v1.0.1
 	github.com/docker/docker v20.10.24+incompatible
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.6.1
@@ -31,7 +31,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/adevinta/vulcan-metrics-client v1.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.44.149 // indirect
+	github.com/aws/aws-sdk-go v1.44.244 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/docker/cli v20.10.23+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/lestrrat-go/backoff v1.0.1 // indirect
-	github.com/miekg/dns v1.1.49 // indirect
+	github.com/miekg/dns v1.1.53 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
@@ -58,10 +58,10 @@ require (
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/mod v0.6.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
