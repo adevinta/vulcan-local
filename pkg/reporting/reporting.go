@@ -212,6 +212,10 @@ func Generate(cfg *config.Config, results *results.ResultsServer, l log.Logger) 
 		// json: Just print the reports as an slice
 		m := map[string]*report.Report{}
 		slice := []*report.Report{}
+		for _, r := range results.Checks {
+			m[r.CheckID] = r
+			slice = append(slice, r)
+		}
 		for _, e := range vs {
 			r, ok := m[e.CheckID]
 			if !ok {
