@@ -242,16 +242,16 @@ cat ~/my_password.txt | docker login --username foo --password-stdin private.reg
 
 `vulcan-local` can run checks which code is stored locally, to do so point the
 checktypes param to a directory containing the code of the checktypes to run.
-For instance, the following command runs the `vulcan-tls` check, by building
+For instance, the following command runs the `vulcan-nuclei` check, by building
 and running the code and the docker image in the directory
-`vulcan-checks/cmd/vulcan-tls` against the hostname: `example.com`
+`vulcan-checks/cmd/vulcan-nuclei` against the hostname: `example.com`
 
 ```bash
 git clone https://github.com/adevinta/vulcan-checks/
 
-## Make some changes in vulcan-checks/cmd i.e. in vulcan-tls.
+## Make some changes in vulcan-checks/cmd i.e. in vulcan-nuclei.
 
-vulcan-local -checktypes "./vulcan-checks/cmd" -t example.com -a Hostname -l debug -i vulcan-tls
+vulcan-local -checktypes "./vulcan-checks/cmd" -t example.com -a Hostname -l debug -i vulcan-nuclei
 ```
 
 At this moment, all the available checks are implemented in [Go](https://go.dev).
