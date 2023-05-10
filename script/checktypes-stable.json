@@ -28,16 +28,6 @@
             ]
         },
         {
-            "name": "vulcan-http-headers",
-            "description": "Analyzes the HTTP headers using Mozilla Observatory",
-            "image": "vulcansec/vulcan-http-headers:edge",
-            "timeout": 700,
-            "required_vars": null,
-            "assets": [
-                "Hostname"
-            ]
-        },
-        {
             "name": "vulcan-nuclei",
             "description": "Scan web addresses with projectdiscovery/nuclei",
             "image": "vulcansec/vulcan-nuclei:edge",
