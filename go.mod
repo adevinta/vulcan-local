@@ -32,7 +32,7 @@ require (
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/adevinta/vulcan-metrics-client v1.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.256 // indirect
-	github.com/cloudflare/circl v1.1.0 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/docker/cli v23.0.5+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
