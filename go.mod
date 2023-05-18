@@ -19,7 +19,7 @@ require (
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.11.0
 	github.com/p4tin/goaws v1.1.2
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
