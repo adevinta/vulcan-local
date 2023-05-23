@@ -129,7 +129,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to start results server %+v", err)
 	}
-	defer results.Shutdown()
 	log.Debug("Sending jobs to run")
 	err = generator.SendJobs(jobs, sqs.ArnChecks, sqs.Endpoint, log)
 	if err != nil {
@@ -170,9 +169,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		SQSWriter: agentconfig.SQSWriter{
 			Endpoint: sqs.Endpoint,
 			ARN:      sqs.ArnStatus,
-		},
-		Uploader: agentconfig.UploaderConfig{
-			Endpoint: results.Endpoint,
 		},
 		API: agentconfig.APIConfig{
 			Host: agentIP,
@@ -221,7 +217,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		logAgent.SetFormatter(log.Formatter)
 		logAgent.SetLevel(logrus.ErrorLevel)
 	}
-	exit := agent.Run(agentConfig, backend, logAgent.WithField("comp", "agent"))
+	exit := agent.Run(agentConfig, results, backend, logAgent.WithField("comp", "agent"))
 	if exit != 0 {
 		return config.ErrorExitCode, fmt.Errorf("error running the agent exit=%d", exit)
 	}
