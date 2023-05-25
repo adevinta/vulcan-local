@@ -5,6 +5,7 @@ go 1.19
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
+	github.com/Admiral-Piett/goaws v0.4.1
 	github.com/adevinta/vulcan-agent v1.1.0
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.0.1
@@ -17,7 +18,6 @@ require (
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.11.0
-	github.com/p4tin/goaws v1.1.2
 	github.com/sirupsen/logrus v1.9.2
 	gopkg.in/yaml.v3 v3.0.1
 )

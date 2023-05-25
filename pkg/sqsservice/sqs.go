@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Admiral-Piett/goaws/app/conf"
+	"github.com/Admiral-Piett/goaws/app/gosqs"
+	"github.com/Admiral-Piett/goaws/app/router"
 	"github.com/adevinta/vulcan-agent/log"
-	"github.com/p4tin/goaws/app/conf"
-	"github.com/p4tin/goaws/app/gosqs"
-	"github.com/p4tin/goaws/app/router"
 	"github.com/sirupsen/logrus"
 )
 
