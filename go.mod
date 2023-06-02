@@ -13,7 +13,7 @@ require (
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/imdario/mergo v0.3.15
+	github.com/imdario/mergo v0.3.16
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.11.0
