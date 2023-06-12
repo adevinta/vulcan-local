@@ -28,11 +28,13 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	"github.com/adevinta/vulcan-local/pkg/sqsservice"
+	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 )
 
 const defaultDockerHost = "host.docker.internal"
 
+var dockerSocket = "/var/run/docker.sock"
 var execCommand = exec.Command
 
 func GetFreePort() (int, error) {
@@ -90,6 +92,13 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			return config.ErrorExitCode, err
 		}
 	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to get docker client: %v", err)
+	}
+	dockerSocket = cli.DaemonHost()
+	log.Debugf("Using docker host=%s", dockerSocket)
 
 	agentIP := getAgentIP(cfg.Conf.IfName, log)
 	if agentIP == "" {
@@ -342,7 +351,8 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
-		rc.HostConfig.Binds = append(rc.HostConfig.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+		dockerVol := strings.TrimPrefix(dockerSocket, "unix://")
+		rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
 
 		// Some checks will fail because the reachability check as they
 		// expect remote urls. This will bypass the check
