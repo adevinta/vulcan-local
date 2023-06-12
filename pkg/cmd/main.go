@@ -34,7 +34,8 @@ import (
 
 const defaultDockerHost = "host.docker.internal"
 
-var dockerSocket = "/var/run/docker.sock"
+var localRegex = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
+var dockerHost = ""
 var execCommand = exec.Command
 
 func GetFreePort() (int, error) {
@@ -97,8 +98,8 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to get docker client: %v", err)
 	}
-	dockerSocket = cli.DaemonHost()
-	log.Debugf("Using docker host=%s", dockerSocket)
+	dockerHost = cli.DaemonHost()
+	log.Debugf("Using docker host=%s", dockerHost)
 
 	agentIP := getAgentIP(cfg.Conf.IfName, log)
 	if agentIP == "" {
@@ -351,8 +352,16 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
-		dockerVol := strings.TrimPrefix(dockerSocket, "unix://")
-		rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
+
+		if strings.HasPrefix(dockerHost, "unix://") {
+			dockerVol := strings.TrimPrefix(dockerHost, "unix://")
+			// Mount the volume in the standard location.
+			rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
+		} else {
+			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host IP.
+			h := localRegex.ReplaceAllString(dockerHost, hostIP)
+			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "DOCKER_HOST", h)
+		}
 
 		// Some checks will fail because the reachability check as they
 		// expect remote urls. This will bypass the check
@@ -373,7 +382,7 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 
 	}
 
-	newTarget = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`).ReplaceAllString(newTarget, hostIP)
+	newTarget = localRegex.ReplaceAllString(newTarget, hostIP)
 
 	if params.Target != newTarget {
 		check := getCheckByID(checks, params.CheckID)
