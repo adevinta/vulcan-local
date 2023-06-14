@@ -28,11 +28,14 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 	"github.com/adevinta/vulcan-local/pkg/sqsservice"
+	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 )
 
 const defaultDockerHost = "host.docker.internal"
 
+var localRegex = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
+var dockerHost = ""
 var execCommand = exec.Command
 
 func GetFreePort() (int, error) {
@@ -90,6 +93,13 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			return config.ErrorExitCode, err
 		}
 	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to get docker client: %v", err)
+	}
+	dockerHost = cli.DaemonHost()
+	log.Debugf("Using docker host=%s", dockerHost)
 
 	agentIP := getAgentIP(cfg.Conf.IfName, log)
 	if agentIP == "" {
@@ -342,7 +352,16 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
-		rc.HostConfig.Binds = append(rc.HostConfig.Binds, "/var/run/docker.sock:/var/run/docker.sock")
+
+		if strings.HasPrefix(dockerHost, "unix://") {
+			dockerVol := strings.TrimPrefix(dockerHost, "unix://")
+			// Mount the volume in the standard location.
+			rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
+		} else {
+			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host IP.
+			h := localRegex.ReplaceAllString(dockerHost, hostIP)
+			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "DOCKER_HOST", h)
+		}
 
 		// Some checks will fail because the reachability check as they
 		// expect remote urls. This will bypass the check
@@ -363,7 +382,7 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 
 	}
 
-	newTarget = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`).ReplaceAllString(newTarget, hostIP)
+	newTarget = localRegex.ReplaceAllString(newTarget, hostIP)
 
 	if params.Target != newTarget {
 		check := getCheckByID(checks, params.CheckID)
