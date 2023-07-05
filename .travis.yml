@@ -3,10 +3,9 @@ go:
   - 1.19.x
 services:
   - docker
-before_script: go install github.com/goreleaser/goreleaser@v1.19.1
 script:
   - go test ./...
-  - goreleaser build --clean --single-target --snapshot --output ./vulcan-local
+  - curl -sfL https://goreleaser.com/static/run | VERSION=v1.19.1 bash -s -- build --clean --single-target --snapshot --output ./vulcan-local
   - docker build . -t vulcan-local
   - ./script/test.sh
 after_success:
@@ -14,7 +13,7 @@ after_success:
 deploy:
   - provider: script
     cleanup: false
-    script: goreleaser
+    script: curl -sfL https://goreleaser.com/static/run | VERSION=v1.19.1 bash -s --
     on:
       tags: true
       condition: $TRAVIS_OS_NAME = linux
