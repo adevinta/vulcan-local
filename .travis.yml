@@ -5,7 +5,7 @@ services:
   - docker
 script:
   - go test ./...
-  - curl -sfL https://goreleaser.com/static/run | VERSION=v1.19.1 bash -s -- build --clean --single-target --snapshot --output ./vulcan-local
+  - curl -sfL https://git.io/goreleaser | VERSION=v1.19.1 bash -s -- build --clean --single-target --snapshot --output ./vulcan-local
   - docker build . -t vulcan-local
   - ./script/test.sh
 after_success:
