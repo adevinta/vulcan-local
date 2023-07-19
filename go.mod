@@ -7,7 +7,7 @@ go 1.19
 require (
 	github.com/adevinta/vulcan-agent v1.1.1
 	github.com/adevinta/vulcan-report v1.0.0
-	github.com/adevinta/vulcan-types v1.1.0
+	github.com/adevinta/vulcan-types v1.1.1
 	github.com/docker/docker v24.0.3+incompatible
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.7.0
