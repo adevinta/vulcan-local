@@ -5,7 +5,7 @@ go 1.19
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
-	github.com/adevinta/vulcan-agent v1.1.1
+	github.com/adevinta/vulcan-agent v1.1.2
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.1.0
 	github.com/docker/docker v24.0.3+incompatible
