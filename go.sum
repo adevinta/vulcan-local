@@ -10,8 +10,8 @@ github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 h1:ZK3C5DtzV2
 github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903/go.mod h1:8TI4H3IbrackdNgv+92dI+rhpCaLqM0IfpgCgenFvRE=
 github.com/acomagu/bufpipe v1.0.4 h1:e3H4WUzM3npvo5uv95QuJM3cQspFNtFBzvJ2oNjKIDQ=
 github.com/acomagu/bufpipe v1.0.4/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ2sYmHc4=
-github.com/adevinta/vulcan-agent v1.1.1 h1:mJ5fU89BSZqLuZpSuDTKbffSo7zPICqcErlReS8LOEA=
-github.com/adevinta/vulcan-agent v1.1.1/go.mod h1:ORenpUIkGIifZ9bqW4YVO+iYn2NyMYaG86iumgchncA=
+github.com/adevinta/vulcan-agent v1.1.2 h1:g6HAijd35aGy9bm98T9JbzNFQMzvKZc+lhNIS8dMpiA=
+github.com/adevinta/vulcan-agent v1.1.2/go.mod h1:ORenpUIkGIifZ9bqW4YVO+iYn2NyMYaG86iumgchncA=
 github.com/adevinta/vulcan-metrics-client v1.0.1 h1:BAugnnRWvkA3vnuCX77W04PWhneZyenkrXtf9YgtZQk=
 github.com/adevinta/vulcan-metrics-client v1.0.1/go.mod h1:we8vxfPMYQqZtOy42PJxsWwv2DwruSaT/wwNMxkum8I=
 github.com/adevinta/vulcan-report v1.0.0 h1:44aICPZ+4svucgCSA5KmjlT3ZGzrvZXiSnkbnj6AC2k=
