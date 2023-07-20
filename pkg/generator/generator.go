@@ -173,11 +173,6 @@ func getTypesFromIdentifier(target config.Target) ([]config.Target, error) {
 		return []config.Target{a}, nil
 	}
 
-	if types.IsGCPProjectID(identifier) {
-		a.AssetType = "GCPProject"
-		return []config.Target{a}, nil
-	}
-
 	var targets []config.Target
 
 	isWeb := false
