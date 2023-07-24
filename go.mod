@@ -10,7 +10,7 @@ require (
 	github.com/adevinta/vulcan-types v1.1.1
 	github.com/docker/docker v24.0.3+incompatible
 	github.com/drone/envsubst v1.0.3
-	github.com/go-git/go-git/v5 v5.7.0
+	github.com/go-git/go-git/v5 v5.8.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/imdario/mergo v0.3.16
