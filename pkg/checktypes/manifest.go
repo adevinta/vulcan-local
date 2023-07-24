@@ -33,6 +33,8 @@ const (
 	WebAddress
 	// GitRepository represents a git repo asset type.
 	GitRepository
+	// GCPProject represents a GCP Project type.
+	GCPProject
 )
 
 var assetTypeStrings = map[AssetType]string{
@@ -44,6 +46,7 @@ var assetTypeStrings = map[AssetType]string{
 	DockerImage:   "DockerImage",
 	WebAddress:    "WebAddress",
 	GitRepository: "GitRepository",
+	GCPProject:    "GCPProject",
 }
 
 // MarshalText returns string representation of a AssetType instance.
