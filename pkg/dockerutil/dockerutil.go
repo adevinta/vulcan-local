@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"runtime"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -27,4 +28,23 @@ func GetGateways(ctx context.Context, cli *client.Client, network string) ([]net
 	}
 
 	return gws, nil
+}
+
+// GetBridgeHost returns a host that corresponds to the Docker host
+// that is reachable from the containers running in the default bridge
+// network.
+func GetBridgeHost(cli *client.Client) (string, error) {
+	if runtime.GOOS != "linux" {
+		return "127.0.0.1", nil
+	}
+
+	gws, err := GetGateways(context.Background(), cli, "bridge")
+	if err != nil {
+		return "", fmt.Errorf("could not get Docker network gateway: %w", err)
+	}
+	if len(gws) != 1 {
+		return "", fmt.Errorf("unexpected number of gateways: %v", len(gws))
+	}
+
+	return gws[0].String(), nil
 }

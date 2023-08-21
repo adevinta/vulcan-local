@@ -11,7 +11,6 @@ import (
 	"net"
 	"os/exec"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -93,8 +92,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	dockerHost = cli.DaemonHost()
 	log.Debugf("Using docker host=%s", dockerHost)
 
-	gs := gitservice.New(log)
-	defer gs.Shutdown()
 	log.Debug("Generating jobs")
 	jobs, err := generator.GenerateJobs(cfg, log)
 	if err != nil {
@@ -131,10 +128,11 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		})
 	}
 
-	listenAddr, err := getListenAddr(cli)
+	listenHost, err := dockerutil.GetBridgeHost(cli)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("could not get listen addr: %w", err)
 	}
+	listenAddr := listenHost + ":0"
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to listen on %v: %w", listenAddr, err)
@@ -166,6 +164,10 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			},
 		},
 	}
+
+	gs := gitservice.New(listenHost, log)
+	defer gs.Shutdown()
+
 	beforeRun := func(params backend.RunParams, rc *docker.RunConfig) error {
 		return beforeCheckRun(params, rc, gs, cfg.Checks, log)
 	}
@@ -316,25 +318,4 @@ func getCheckByID(checks []config.Check, id string) *config.Check {
 		}
 	}
 	return nil
-}
-
-func getListenAddr(cli *client.Client) (string, error) {
-	if !inLinux() {
-		return "127.0.0.1:0", nil
-	}
-
-	gws, err := dockerutil.GetGateways(context.Background(), cli, "bridge")
-	if err != nil {
-		return "", fmt.Errorf("could not get Docker network gateway: %w", err)
-	}
-	if len(gws) != 1 {
-		return "", fmt.Errorf("unexpected number of gateways: %v", len(gws))
-	}
-
-	listenAddr := gws[0].String() + ":0"
-	return listenAddr, nil
-}
-
-func inLinux() bool {
-	return runtime.GOOS == "linux"
 }
