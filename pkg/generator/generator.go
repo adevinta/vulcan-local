@@ -22,7 +22,6 @@ import (
 	"github.com/adevinta/vulcan-agent/queue"
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
-	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	types "github.com/adevinta/vulcan-types"
 )
 
@@ -50,7 +49,7 @@ func buildOptions(options map[string]interface{}) (string, error) {
 	return string(content), nil
 }
 
-func GenerateJobs(cfg *config.Config, agentIp, hostIp string, gs gitservice.GitService, l log.Logger) ([]jobrunner.Job, error) {
+func GenerateJobs(cfg *config.Config, l log.Logger) ([]jobrunner.Job, error) {
 	unique := map[string]*config.Check{}
 
 	jobs := []jobrunner.Job{}

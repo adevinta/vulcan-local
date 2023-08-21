@@ -14,7 +14,6 @@ import (
 	"github.com/adevinta/vulcan-agent/jobrunner"
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
-	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	"github.com/adevinta/vulcan-local/pkg/testutil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -151,10 +150,6 @@ func TestMergeOptions(t *testing.T) {
 }
 
 func TestGenerateJobs(t *testing.T) {
-
-	gs := gitservice.New(loggerUser)
-	defer gs.Shutdown()
-
 	tests := []struct {
 		name    string
 		cfg     *config.Config
@@ -241,8 +236,7 @@ func TestGenerateJobs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			got, err := GenerateJobs(tt.cfg, "", "", gs, loggerUser)
+			got, err := GenerateJobs(tt.cfg, loggerUser)
 			if errToStr(err) != errToStr(tt.wantErr) {
 				t.Fatal(err)
 			}
