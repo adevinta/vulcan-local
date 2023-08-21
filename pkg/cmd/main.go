@@ -28,30 +28,20 @@ import (
 
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
+	"github.com/adevinta/vulcan-local/pkg/dockerutil"
 	"github.com/adevinta/vulcan-local/pkg/generator"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 )
 
-const defaultDockerHost = "host.docker.internal"
+const dockerHostname = "host.docker.internal"
 
-var localRegex = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
-var dockerHost = ""
-var execCommand = exec.Command
-
-func GetFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, err
-	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port, nil
-}
+var (
+	localRegex  = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
+	dockerHost  = ""
+	execCommand = exec.Command
+)
 
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
@@ -103,20 +93,10 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	dockerHost = cli.DaemonHost()
 	log.Debugf("Using docker host=%s", dockerHost)
 
-	agentIP := getAgentIP(cfg.Conf.IfName, log)
-	if agentIP == "" {
-		return config.ErrorExitCode, fmt.Errorf("unable to get the agent ip %s", cfg.Conf.IfName)
-	}
-
-	hostIP := getHostIP(log)
-	if hostIP == "" {
-		return config.ErrorExitCode, fmt.Errorf("unable to infer host ip")
-	}
-
 	gs := gitservice.New(log)
 	defer gs.Shutdown()
 	log.Debug("Generating jobs")
-	jobs, err := generator.GenerateJobs(cfg, agentIP, hostIP, gs, log)
+	jobs, err := generator.GenerateJobs(cfg, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
 	}
@@ -151,10 +131,15 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		})
 	}
 
-	agentPort, err := GetFreePort()
+	listenAddr, err := getListenAddr(cli)
 	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to get a free port for agent %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("could not get listen addr: %w", err)
 	}
+	ln, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to listen on %v: %w", listenAddr, err)
+	}
+
 	agentConfig := agentconfig.Config{
 		Agent: agentconfig.AgentConfig{
 			ConcurrentJobs:         cfg.Conf.Concurrency,
@@ -163,8 +148,8 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			Timeout:                180,
 		},
 		API: agentconfig.APIConfig{
-			Host: agentIP,
-			Port: fmt.Sprintf(":%d", agentPort),
+			Host:     dockerHostname,
+			Listener: ln,
 		},
 		Check: agentconfig.CheckConfig{
 			Vars: cfg.Conf.Vars,
@@ -182,7 +167,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		},
 	}
 	beforeRun := func(params backend.RunParams, rc *docker.RunConfig) error {
-		return beforeCheckRun(params, rc, agentIP, gs, hostIP, cfg.Checks, log)
+		return beforeCheckRun(params, rc, gs, cfg.Checks, log)
 	}
 	backend, err := docker.NewBackend(log, agentConfig, beforeRun)
 	if err != nil {
@@ -262,79 +247,13 @@ func checkDependencies(cfg *config.Config, log agentlog.Logger) error {
 	return nil
 }
 
-func GetInterfaceAddr(ifaceName string) (string, error) {
-	iface, err := net.InterfaceByName(ifaceName)
-	if err != nil {
-		return "", err
-	}
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return "", err
-	}
-
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			return "", err
-		}
-
-		// Check if it is IPv4.
-		if ip.To4() != nil {
-			return ip.To4().String(), nil
-		}
-	}
-
-	return "", fmt.Errorf("failed to determine Docker agent IP address")
-}
-
-func getAgentIP(ifacename string, log agentlog.Logger) string {
-	ip, err := GetInterfaceAddr(ifacename)
-	if err == nil {
-		log.Debugf("Agent address iface=%s ip=%s", ifacename, ip)
-		return ip
-	}
-
-	os := runtime.GOOS
-	switch os {
-	case "darwin":
-		log.Debugf("Agent address os=%s ip=%s", os, defaultDockerHost)
-		return defaultDockerHost
-	case "linux":
-		// Perhaps the agent is running in a container...
-		ip, err = GetInterfaceAddr("eth0")
-		if err == nil {
-			log.Debugf("Agent address iface=eth0 os=%s ip=%s", os, ip)
-			return ip
-		}
-	}
-	log.Errorf("Unable to get agent address iface=%s os=%s", ifacename, os)
-	return ""
-}
-
-func getHostIP(l agentlog.Logger) string {
-	if runtime.GOOS == "darwin" {
-		return defaultDockerHost
-	}
-
-	cmd := exec.Command("docker", "run", "--rm", "busybox:1.34.1", "sh", "-c", "ip route|awk '/default/ { print $3 }'")
-	var cmdOut bytes.Buffer
-	cmd.Stdout = &cmdOut
-	err := cmd.Run()
-	if err != nil {
-		l.Errorf("unable to get Hostip %v %v", err, cmdOut.String())
-		return ""
-	}
-	ip := strings.TrimSuffix(cmdOut.String(), "\n")
-	l.Debugf("Hostip=%s", ip)
-	return ip
-}
-
 // beforeCheckRun is a hook executed by the agent just before a check is run
 // in. it's used to do some extra configuration needed for some checks to run
 // properly when they are executed locally.
-func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
-	agentIP string, gs gitservice.GitService, hostIP string,
+func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig, gs gitservice.GitService,
 	checks []config.Check, log *logrus.Logger) error {
+	rc.HostConfig.ExtraHosts = []string{dockerHostname + ":host-gateway"}
+
 	newTarget := params.Target
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
@@ -345,8 +264,8 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 			// Mount the volume in the standard location.
 			rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
 		} else {
-			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host IP.
-			h := localRegex.ReplaceAllString(dockerHost, hostIP)
+			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host hostname.
+			h := localRegex.ReplaceAllString(dockerHost, dockerHostname)
 			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "DOCKER_HOST", h)
 		}
 
@@ -364,12 +283,12 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 				log.Errorf("Unable to create local git server check %v", err)
 				return nil
 			}
-			newTarget = fmt.Sprintf("http://%s:%d/", agentIP, port)
+			newTarget = fmt.Sprintf("http://%s:%d/", dockerHostname, port)
 		}
 
 	}
 
-	newTarget = localRegex.ReplaceAllString(newTarget, hostIP)
+	newTarget = localRegex.ReplaceAllString(newTarget, dockerHostname)
 
 	if params.Target != newTarget {
 		check := getCheckByID(checks, params.CheckID)
@@ -397,4 +316,25 @@ func getCheckByID(checks []config.Check, id string) *config.Check {
 		}
 	}
 	return nil
+}
+
+func getListenAddr(cli *client.Client) (string, error) {
+	if !inLinux() {
+		return "127.0.0.1:0", nil
+	}
+
+	gws, err := dockerutil.GetGateways(context.Background(), cli, "bridge")
+	if err != nil {
+		return "", fmt.Errorf("could not get Docker network gateway: %w", err)
+	}
+	if len(gws) != 1 {
+		return "", fmt.Errorf("unexpected number of gateways: %v", len(gws))
+	}
+
+	listenAddr := gws[0].String() + ":0"
+	return listenAddr, nil
+}
+
+func inLinux() bool {
+	return runtime.GOOS == "linux"
 }
