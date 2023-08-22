@@ -12,7 +12,7 @@ require (
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.8.0
 	github.com/google/go-cmp v0.5.9
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/imdario/mergo v0.3.16
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
 	github.com/manelmontilla/toml v0.3.0
