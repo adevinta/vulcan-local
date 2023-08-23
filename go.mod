@@ -5,7 +5,7 @@ go 1.19
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
 require (
-	github.com/adevinta/vulcan-agent v1.1.2
+	github.com/adevinta/vulcan-agent v1.1.3
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.1.1
 	github.com/docker/docker v24.0.5+incompatible
@@ -30,9 +30,9 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/adevinta/vulcan-metrics-client v1.0.1 // indirect
-	github.com/aws/aws-sdk-go v1.44.299 // indirect
+	github.com/aws/aws-sdk-go v1.44.313 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/docker/cli v24.0.1+incompatible // indirect
+	github.com/docker/cli v24.0.5+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
