@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os/exec"
 	"regexp"
@@ -22,7 +23,9 @@ import (
 	agentlog "github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-agent/queue"
 	"github.com/adevinta/vulcan-agent/queue/chanqueue"
-	"github.com/docker/docker/client"
+	"github.com/docker/cli/cli/command"
+	dockerconfig "github.com/docker/cli/cli/config"
+	"github.com/docker/cli/cli/flags"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
@@ -34,12 +37,12 @@ import (
 	"github.com/adevinta/vulcan-local/pkg/results"
 )
 
-const dockerHostname = "host.docker.internal"
+const dockerInternalHost = "host.docker.internal"
 
 var (
-	localRegex  = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
-	dockerHost  = ""
-	execCommand = exec.Command
+	localRegex       = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
+	dockerClientHost = ""
+	execCommand      = exec.Command
 )
 
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
@@ -85,12 +88,13 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		}
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := command.NewAPIClientFromFlags(flags.NewClientOptions(), dockerconfig.LoadDefaultConfigFile(io.Discard))
 	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to get docker client: %v", err)
+		return config.ErrorExitCode, fmt.Errorf("unable to get Docker client: %w", err)
 	}
-	dockerHost = cli.DaemonHost()
-	log.Debugf("Using docker host=%s", dockerHost)
+
+	dockerClientHost = cli.DaemonHost()
+	log.Debugf("Using docker host=%s", dockerClientHost)
 
 	log.Debug("Generating jobs")
 	jobs, err := generator.GenerateJobs(cfg, log)
@@ -128,7 +132,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		})
 	}
 
-	listenHost, err := dockerutil.GetBridgeHost(cli)
+	listenHost, err := dockerutil.BridgeHost(cli)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("could not get listen addr: %w", err)
 	}
@@ -146,7 +150,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			Timeout:                180,
 		},
 		API: agentconfig.APIConfig{
-			Host:     dockerHostname,
+			Host:     dockerInternalHost,
 			Listener: ln,
 		},
 		Check: agentconfig.CheckConfig{
@@ -254,20 +258,20 @@ func checkDependencies(cfg *config.Config, log agentlog.Logger) error {
 // properly when they are executed locally.
 func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig, gs gitservice.GitService,
 	checks []config.Check, log *logrus.Logger) error {
-	rc.HostConfig.ExtraHosts = []string{dockerHostname + ":host-gateway"}
+	rc.HostConfig.ExtraHosts = []string{dockerInternalHost + ":host-gateway"}
 
 	newTarget := params.Target
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
 
-		if strings.HasPrefix(dockerHost, "unix://") {
-			dockerVol := strings.TrimPrefix(dockerHost, "unix://")
+		if strings.HasPrefix(dockerClientHost, "unix://") {
+			dockerVol := strings.TrimPrefix(dockerClientHost, "unix://")
 			// Mount the volume in the standard location.
 			rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
 		} else {
 			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host hostname.
-			h := localRegex.ReplaceAllString(dockerHost, dockerHostname)
+			h := localRegex.ReplaceAllString(dockerClientHost, dockerInternalHost)
 			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "DOCKER_HOST", h)
 		}
 
@@ -285,12 +289,12 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig, gs gitservic
 				log.Errorf("Unable to create local git server check %v", err)
 				return nil
 			}
-			newTarget = fmt.Sprintf("http://%s:%d/", dockerHostname, port)
+			newTarget = fmt.Sprintf("http://%s:%d/", dockerInternalHost, port)
 		}
 
 	}
 
-	newTarget = localRegex.ReplaceAllString(newTarget, dockerHostname)
+	newTarget = localRegex.ReplaceAllString(newTarget, dockerInternalHost)
 
 	if params.Target != newTarget {
 		check := getCheckByID(checks, params.CheckID)

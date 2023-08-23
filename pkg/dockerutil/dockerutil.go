@@ -10,8 +10,8 @@ import (
 	"github.com/docker/docker/client"
 )
 
-// GetGateways returns the gateways of the specified Docker network.
-func GetGateways(ctx context.Context, cli *client.Client, network string) ([]*net.IPNet, error) {
+// Gateways returns the gateways of the specified Docker network.
+func Gateways(ctx context.Context, cli client.APIClient, network string) ([]*net.IPNet, error) {
 	resp, err := cli.NetworkInspect(ctx, network, types.NetworkInspectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("network inspect: %w", err)
@@ -37,8 +37,8 @@ func GetGateways(ctx context.Context, cli *client.Client, network string) ([]*ne
 
 // GetBridgeHost returns the gateway of the default Docker bridge
 // network.
-func GetBridgeGateway(cli *client.Client) (*net.IPNet, error) {
-	gws, err := GetGateways(context.Background(), cli, "bridge")
+func BridgeGateway(cli client.APIClient) (*net.IPNet, error) {
+	gws, err := Gateways(context.Background(), cli, "bridge")
 	if err != nil {
 		return nil, fmt.Errorf("could not get Docker network gateway: %w", err)
 	}
@@ -48,9 +48,9 @@ func GetBridgeGateway(cli *client.Client) (*net.IPNet, error) {
 	return gws[0], nil
 }
 
-// GetBridgeHost returns a host that points to the Docker host and is
+// BridgeHost returns a host that points to the Docker host and is
 // reachable from the containers running in the default bridge.
-func GetBridgeHost(cli *client.Client) (string, error) {
+func BridgeHost(cli client.APIClient) (string, error) {
 	isDesktop, err := isDockerDesktop(cli)
 	if err != nil {
 		return "", fmt.Errorf("detect Docker Desktop: %w", err)
@@ -60,7 +60,7 @@ func GetBridgeHost(cli *client.Client) (string, error) {
 		return "127.0.0.1", nil
 	}
 
-	gw, err := GetBridgeGateway(cli)
+	gw, err := BridgeGateway(cli)
 	if err != nil {
 		return "", fmt.Errorf("get bridge gateway: %w", err)
 	}
@@ -70,13 +70,13 @@ func GetBridgeHost(cli *client.Client) (string, error) {
 // isDockerDesktop returns true if the Docker daemon is part of Docker
 // Desktop. That means that there is a network interface with the same
 // IP of the gateway of the default Docker bridge network.
-func isDockerDesktop(cli *client.Client) (bool, error) {
+func isDockerDesktop(cli client.APIClient) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return false, fmt.Errorf("interface addrs: %w", err)
 	}
 
-	gw, err := GetBridgeGateway(cli)
+	gw, err := BridgeGateway(cli)
 	if err != nil {
 		return false, fmt.Errorf("get bridge gateway: %w", err)
 	}
