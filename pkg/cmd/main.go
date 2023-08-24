@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -26,6 +28,8 @@ import (
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/tlsconfig"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
@@ -88,7 +92,7 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		}
 	}
 
-	cli, err := command.NewAPIClientFromFlags(flags.NewClientOptions(), dockerconfig.LoadDefaultConfigFile(io.Discard))
+	cli, err := command.NewAPIClientFromFlags(defaultClientOptions(), dockerconfig.LoadDefaultConfigFile(io.Discard))
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to get Docker client: %w", err)
 	}
@@ -220,6 +224,30 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	}
 
 	return reportCode, nil
+}
+
+func defaultClientOptions() *flags.ClientOptions {
+	tlsVerify := os.Getenv(client.EnvTLSVerify) != ""
+
+	var tlsopts *tlsconfig.Options
+	if tlsVerify {
+		certPath := os.Getenv(client.EnvOverrideCertPath)
+		if certPath == "" {
+			certPath = dockerconfig.Dir()
+		}
+		tlsopts = &tlsconfig.Options{
+			CAFile:   filepath.Join(certPath, flags.DefaultCaFile),
+			CertFile: filepath.Join(certPath, flags.DefaultCertFile),
+			KeyFile:  filepath.Join(certPath, flags.DefaultKeyFile),
+		}
+	}
+
+	opts := &flags.ClientOptions{
+		TLS:        tlsVerify,
+		TLSVerify:  tlsVerify,
+		TLSOptions: tlsopts,
+	}
+	return opts
 }
 
 func upsertEnv(envs []string, name, newValue string) []string {
