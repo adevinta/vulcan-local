@@ -46,7 +46,7 @@ import (
 const dockerInternalHost = "host.docker.internal"
 
 var (
-	localRegex       = regexp.MustCompile(`(?i)\b(localhost|localhost4|127.0.0.1|localhost6|ip6-localhost|::1|\[::1\])\b`)
+	localRegex       = regexp.MustCompile(`(?i)(\b(localhost|localhost4|127\.0\.0\.1|localhost6|ip6-localhost)\b|::1|\[::1\])`)
 	dockerClientHost = ""
 	execCommand      = exec.Command
 )
