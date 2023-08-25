@@ -7,21 +7,31 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net"
+	"net/url"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/adevinta/vulcan-agent/agent"
 	"github.com/adevinta/vulcan-agent/backend"
 	"github.com/adevinta/vulcan-agent/backend/docker"
 	agentconfig "github.com/adevinta/vulcan-agent/config"
+	"github.com/adevinta/vulcan-agent/jobrunner"
 	agentlog "github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-agent/queue"
 	"github.com/adevinta/vulcan-agent/queue/chanqueue"
+	types "github.com/adevinta/vulcan-types"
+	"github.com/docker/docker/client"
+	"github.com/jroimartin/proxy"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
@@ -36,7 +46,7 @@ import (
 const dockerInternalHost = "host.docker.internal"
 
 var (
-	localRegex       = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
+	localRegex       = regexp.MustCompile(`(?i)\b(localhost|localhost4|127.0.0.1|localhost6|ip6-localhost|::1|\[::1\])\b`)
 	dockerClientHost = ""
 	execCommand      = exec.Command
 )
@@ -102,6 +112,12 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		log.Infof("Empty list of checks")
 		return config.SuccessExitCode, nil
 	}
+
+	pg, err := proxyLocalServices(cli, jobs, log)
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("network setup: %w", err)
+	}
+	defer pg.Close()
 
 	results, err := results.Start(log)
 	if err != nil {
@@ -318,4 +334,111 @@ func getCheckByID(checks []config.Check, id string) *config.Check {
 		}
 	}
 	return nil
+}
+
+func proxyLocalServices(cli client.APIClient, jobs []jobrunner.Job, logger *logrus.Logger) (*proxy.Group, error) {
+	streams, err := localStreams(cli, jobs, logger)
+	if err != nil {
+		return nil, fmt.Errorf("local streams: %w", err)
+	}
+
+	pg := &proxy.Group{ErrorLog: log.New(io.Discard, "", 0)}
+
+	var wg sync.WaitGroup
+	pg.BeforeAccept = func() error {
+		wg.Done()
+		return nil
+	}
+	wg.Add(len(streams))
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	errc := pg.ListenAndServe(streams)
+
+loop:
+	for {
+		select {
+		case err := <-errc:
+			// No listeners.
+			if errors.Is(err, proxy.ErrGroupClosed) {
+				break loop
+			}
+
+			// If there is a service already listening on that
+			// address, then assume that it is the target service
+			// and ignore the error.
+			if errors.Is(err, syscall.EADDRINUSE) {
+				continue
+			}
+
+			// An unexpected error happened in one of the
+			// proxies, but there might be other proxies
+			// listening. So, close all of them.
+			pg.Close()
+			return nil, fmt.Errorf("proxy group: %w", err)
+		case <-done:
+			// All proxies are listening.
+			break loop
+		}
+	}
+	return pg, nil
+}
+
+func localStreams(cli client.APIClient, jobs []jobrunner.Job, logger *logrus.Logger) ([]proxy.Stream, error) {
+	bridgeHost, err := dockerutil.BridgeHost(cli)
+	if err != nil {
+		return nil, fmt.Errorf("bridge host: %w", err)
+	}
+
+	targets := make(map[string]struct{})
+	for _, j := range jobs {
+		if types.AssetType(j.AssetType) != types.WebAddress {
+			continue
+		}
+		targets[j.Target] = struct{}{}
+	}
+
+	var streams []proxy.Stream
+	for target := range targets {
+		u, err := url.Parse(target)
+		if err != nil {
+			return nil, fmt.Errorf("url parse: %w", err)
+		}
+
+		hostname, port := u.Hostname(), u.Port()
+		if !isLoopback(hostname) {
+			continue
+		}
+
+		listenAddr := net.JoinHostPort(bridgeHost, port)
+		dialAddr := net.JoinHostPort(hostname, port)
+		s := fmt.Sprintf("tcp:%v,tcp:%v", listenAddr, dialAddr)
+		stream, err := proxy.ParseStream(s)
+		if err != nil {
+			return nil, fmt.Errorf("parse stream: %w", err)
+		}
+
+		logger.Debugf("bidirectional data stream: %v", stream)
+
+		streams = append(streams, stream)
+	}
+	return streams, nil
+}
+
+func isLoopback(host string) bool {
+	ips, err := net.DefaultResolver.LookupIP(context.Background(), "ip", host)
+	if err != nil {
+		return false
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() {
+			return true
+		}
+	}
+	return false
 }

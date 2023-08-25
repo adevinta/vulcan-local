@@ -1,6 +1,6 @@
 module github.com/adevinta/vulcan-local
 
-go 1.20
+go 1.21.0
 
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
@@ -17,6 +17,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/imdario/mergo v0.3.16
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
+	github.com/jroimartin/proxy v1.2.1
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.12.0
 	github.com/sirupsen/logrus v1.9.3

@@ -106,8 +106,8 @@ func BridgeHost(cli client.APIClient) (string, error) {
 }
 
 // isDockerDesktop returns true if the Docker daemon is part of Docker
-// Desktop. That means that there is a network interface with the same
-// IP of the gateway of the default Docker bridge network.
+// Desktop. That means that the IP of the gateway of the default
+// Docker bridge network is not assigned to any network interface.
 func isDockerDesktop(cli client.APIClient) (bool, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
