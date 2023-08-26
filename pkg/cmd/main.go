@@ -9,8 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"log"
 	"net"
 	"net/url"
 	"os/exec"
@@ -342,7 +340,7 @@ func proxyLocalServices(cli client.APIClient, jobs []jobrunner.Job, logger *logr
 		return nil, fmt.Errorf("local streams: %w", err)
 	}
 
-	pg := &proxy.Group{ErrorLog: log.New(io.Discard, "", 0)}
+	pg := &proxy.Group{}
 
 	var wg sync.WaitGroup
 	pg.BeforeAccept = func() error {
