@@ -1,6 +1,6 @@
 module github.com/adevinta/vulcan-local
 
-go 1.20
+go 1.21.0
 
 // replace github.com/adevinta/vulcan-agent => ../vulcan-agent
 
@@ -8,13 +8,16 @@ require (
 	github.com/adevinta/vulcan-agent v1.2.0
 	github.com/adevinta/vulcan-report v1.0.0
 	github.com/adevinta/vulcan-types v1.1.1
+	github.com/docker/cli v24.0.5+incompatible
 	github.com/docker/docker v24.0.5+incompatible
+	github.com/docker/go-connections v0.4.0
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.8.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/imdario/mergo v0.3.16
 	github.com/jesusfcr/gittp v0.0.0-20211215162506-673d6dfd0f2b
+	github.com/jroimartin/proxy v1.2.2
 	github.com/manelmontilla/toml v0.3.0
 	github.com/otiai10/copy v1.12.0
 	github.com/sirupsen/logrus v1.9.3
@@ -32,11 +35,9 @@ require (
 	github.com/aws/aws-sdk-go v1.44.313 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/docker/cli v24.0.5+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go v1.5.1-1.0.20160303222718-d30aec9fd63c // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

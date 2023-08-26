@@ -7,51 +7,47 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os/exec"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/adevinta/vulcan-agent/agent"
 	"github.com/adevinta/vulcan-agent/backend"
 	"github.com/adevinta/vulcan-agent/backend/docker"
 	agentconfig "github.com/adevinta/vulcan-agent/config"
+	"github.com/adevinta/vulcan-agent/jobrunner"
 	agentlog "github.com/adevinta/vulcan-agent/log"
 	"github.com/adevinta/vulcan-agent/queue"
 	"github.com/adevinta/vulcan-agent/queue/chanqueue"
+	types "github.com/adevinta/vulcan-types"
 	"github.com/docker/docker/client"
+	"github.com/jroimartin/proxy"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
+	"github.com/adevinta/vulcan-local/pkg/dockerutil"
 	"github.com/adevinta/vulcan-local/pkg/generator"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
 )
 
-const defaultDockerHost = "host.docker.internal"
+const dockerInternalHost = "host.docker.internal"
 
-var localRegex = regexp.MustCompile(`(?i)\b(localhost|127.0.0.1)\b`)
-var dockerHost = ""
-var execCommand = exec.Command
-
-func GetFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, err
-	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port, nil
-}
+var (
+	localRegex       = regexp.MustCompile(`(?i)(\b(localhost|localhost4|127\.0\.0\.1|localhost6|ip6-localhost)\b|::1|\[::1\])`)
+	dockerClientHost = ""
+	execCommand      = exec.Command
+)
 
 func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 	var err error
@@ -96,27 +92,16 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		}
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := dockerutil.NewAPIClient()
 	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to get docker client: %v", err)
-	}
-	dockerHost = cli.DaemonHost()
-	log.Debugf("Using docker host=%s", dockerHost)
-
-	agentIP := getAgentIP(cfg.Conf.IfName, log)
-	if agentIP == "" {
-		return config.ErrorExitCode, fmt.Errorf("unable to get the agent ip %s", cfg.Conf.IfName)
+		return config.ErrorExitCode, fmt.Errorf("unable to get Docker client: %w", err)
 	}
 
-	hostIP := getHostIP(log)
-	if hostIP == "" {
-		return config.ErrorExitCode, fmt.Errorf("unable to infer host ip")
-	}
+	dockerClientHost = cli.DaemonHost()
+	log.Debugf("Using docker host=%s", dockerClientHost)
 
-	gs := gitservice.New(log)
-	defer gs.Shutdown()
 	log.Debug("Generating jobs")
-	jobs, err := generator.GenerateJobs(cfg, agentIP, hostIP, gs, log)
+	jobs, err := generator.GenerateJobs(cfg, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to generate checks %+v", err)
 	}
@@ -125,6 +110,12 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		log.Infof("Empty list of checks")
 		return config.SuccessExitCode, nil
 	}
+
+	pg, err := proxyLocalServices(cli, jobs, log)
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("network setup: %w", err)
+	}
+	defer pg.Close()
 
 	results, err := results.Start(log)
 	if err != nil {
@@ -151,10 +142,16 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		})
 	}
 
-	agentPort, err := GetFreePort()
+	listenHost, err := dockerutil.BridgeHost(cli)
 	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to get a free port for agent %+v", err)
+		return config.ErrorExitCode, fmt.Errorf("could not get listen addr: %w", err)
 	}
+	listenAddr := listenHost + ":0"
+	ln, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return config.ErrorExitCode, fmt.Errorf("unable to listen on %v: %w", listenAddr, err)
+	}
+
 	agentConfig := agentconfig.Config{
 		Agent: agentconfig.AgentConfig{
 			ConcurrentJobs:         cfg.Conf.Concurrency,
@@ -163,8 +160,8 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			Timeout:                180,
 		},
 		API: agentconfig.APIConfig{
-			Host: agentIP,
-			Port: fmt.Sprintf(":%d", agentPort),
+			Host:     dockerInternalHost,
+			Listener: ln,
 		},
 		Check: agentconfig.CheckConfig{
 			Vars: cfg.Conf.Vars,
@@ -181,8 +178,12 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			},
 		},
 	}
+
+	gs := gitservice.New(listenHost, log)
+	defer gs.Shutdown()
+
 	beforeRun := func(params backend.RunParams, rc *docker.RunConfig) error {
-		return beforeCheckRun(params, rc, agentIP, gs, hostIP, cfg.Checks, log)
+		return beforeCheckRun(params, rc, gs, cfg.Checks, log)
 	}
 	backend, err := docker.NewBackend(log, agentConfig, beforeRun)
 	if err != nil {
@@ -262,91 +263,25 @@ func checkDependencies(cfg *config.Config, log agentlog.Logger) error {
 	return nil
 }
 
-func GetInterfaceAddr(ifaceName string) (string, error) {
-	iface, err := net.InterfaceByName(ifaceName)
-	if err != nil {
-		return "", err
-	}
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return "", err
-	}
-
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			return "", err
-		}
-
-		// Check if it is IPv4.
-		if ip.To4() != nil {
-			return ip.To4().String(), nil
-		}
-	}
-
-	return "", fmt.Errorf("failed to determine Docker agent IP address")
-}
-
-func getAgentIP(ifacename string, log agentlog.Logger) string {
-	ip, err := GetInterfaceAddr(ifacename)
-	if err == nil {
-		log.Debugf("Agent address iface=%s ip=%s", ifacename, ip)
-		return ip
-	}
-
-	os := runtime.GOOS
-	switch os {
-	case "darwin":
-		log.Debugf("Agent address os=%s ip=%s", os, defaultDockerHost)
-		return defaultDockerHost
-	case "linux":
-		// Perhaps the agent is running in a container...
-		ip, err = GetInterfaceAddr("eth0")
-		if err == nil {
-			log.Debugf("Agent address iface=eth0 os=%s ip=%s", os, ip)
-			return ip
-		}
-	}
-	log.Errorf("Unable to get agent address iface=%s os=%s", ifacename, os)
-	return ""
-}
-
-func getHostIP(l agentlog.Logger) string {
-	if runtime.GOOS == "darwin" {
-		return defaultDockerHost
-	}
-
-	cmd := exec.Command("docker", "run", "--rm", "busybox:1.34.1", "sh", "-c", "ip route|awk '/default/ { print $3 }'")
-	var cmdOut bytes.Buffer
-	cmd.Stdout = &cmdOut
-	err := cmd.Run()
-	if err != nil {
-		l.Errorf("unable to get Hostip %v %v", err, cmdOut.String())
-		return ""
-	}
-	ip := strings.TrimSuffix(cmdOut.String(), "\n")
-	l.Debugf("Hostip=%s", ip)
-	return ip
-}
-
 // beforeCheckRun is a hook executed by the agent just before a check is run
 // in. it's used to do some extra configuration needed for some checks to run
 // properly when they are executed locally.
-func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
-	agentIP string, gs gitservice.GitService, hostIP string,
+func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig, gs gitservice.GitService,
 	checks []config.Check, log *logrus.Logger) error {
+	rc.HostConfig.ExtraHosts = []string{dockerInternalHost + ":host-gateway"}
+
 	newTarget := params.Target
 	// If the asset type is a DockerImage mount the docker socket in case the image is already there,
 	// and the check can access it.
 	if params.AssetType == "DockerImage" {
 
-		if strings.HasPrefix(dockerHost, "unix://") {
-			dockerVol := strings.TrimPrefix(dockerHost, "unix://")
+		if strings.HasPrefix(dockerClientHost, "unix://") {
+			dockerVol := strings.TrimPrefix(dockerClientHost, "unix://")
 			// Mount the volume in the standard location.
 			rc.HostConfig.Binds = append(rc.HostConfig.Binds, fmt.Sprintf("%s:/var/run/docker.sock", dockerVol))
 		} else {
-			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host IP.
-			h := localRegex.ReplaceAllString(dockerHost, hostIP)
+			// for ssh / http / https just set DOCKER_HOST replacing localhost with the docker host hostname.
+			h := localRegex.ReplaceAllString(dockerClientHost, dockerInternalHost)
 			rc.ContainerConfig.Env = upsertEnv(rc.ContainerConfig.Env, "DOCKER_HOST", h)
 		}
 
@@ -364,12 +299,12 @@ func beforeCheckRun(params backend.RunParams, rc *docker.RunConfig,
 				log.Errorf("Unable to create local git server check %v", err)
 				return nil
 			}
-			newTarget = fmt.Sprintf("http://%s:%d/", agentIP, port)
+			newTarget = fmt.Sprintf("http://%s:%d/", dockerInternalHost, port)
 		}
 
 	}
 
-	newTarget = localRegex.ReplaceAllString(newTarget, hostIP)
+	newTarget = localRegex.ReplaceAllString(newTarget, dockerInternalHost)
 
 	if params.Target != newTarget {
 		check := getCheckByID(checks, params.CheckID)
@@ -397,4 +332,111 @@ func getCheckByID(checks []config.Check, id string) *config.Check {
 		}
 	}
 	return nil
+}
+
+func proxyLocalServices(cli client.APIClient, jobs []jobrunner.Job, logger *logrus.Logger) (*proxy.Group, error) {
+	streams, err := localStreams(cli, jobs, logger)
+	if err != nil {
+		return nil, fmt.Errorf("local streams: %w", err)
+	}
+
+	pg := &proxy.Group{}
+
+	var wg sync.WaitGroup
+	pg.BeforeAccept = func() error {
+		wg.Done()
+		return nil
+	}
+	wg.Add(len(streams))
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	errc := pg.ListenAndServe(streams)
+
+loop:
+	for {
+		select {
+		case err := <-errc:
+			// No listeners.
+			if errors.Is(err, proxy.ErrGroupClosed) {
+				break loop
+			}
+
+			// If there is a service already listening on that
+			// address, then assume that it is the target service
+			// and ignore the error.
+			if errors.Is(err, syscall.EADDRINUSE) {
+				continue
+			}
+
+			// An unexpected error happened in one of the
+			// proxies, but there might be other proxies
+			// listening. So, close all of them.
+			pg.Close()
+			return nil, fmt.Errorf("proxy group: %w", err)
+		case <-done:
+			// All proxies are listening.
+			break loop
+		}
+	}
+	return pg, nil
+}
+
+func localStreams(cli client.APIClient, jobs []jobrunner.Job, logger *logrus.Logger) ([]proxy.Stream, error) {
+	bridgeHost, err := dockerutil.BridgeHost(cli)
+	if err != nil {
+		return nil, fmt.Errorf("bridge host: %w", err)
+	}
+
+	targets := make(map[string]struct{})
+	for _, j := range jobs {
+		if types.AssetType(j.AssetType) != types.WebAddress {
+			continue
+		}
+		targets[j.Target] = struct{}{}
+	}
+
+	var streams []proxy.Stream
+	for target := range targets {
+		u, err := url.Parse(target)
+		if err != nil {
+			return nil, fmt.Errorf("url parse: %w", err)
+		}
+
+		hostname, port := u.Hostname(), u.Port()
+		if !isLoopback(hostname) {
+			continue
+		}
+
+		listenAddr := net.JoinHostPort(bridgeHost, port)
+		dialAddr := net.JoinHostPort(hostname, port)
+		s := fmt.Sprintf("tcp:%v,tcp:%v", listenAddr, dialAddr)
+		stream, err := proxy.ParseStream(s)
+		if err != nil {
+			return nil, fmt.Errorf("parse stream: %w", err)
+		}
+
+		logger.Debugf("bidirectional data stream: %v", stream)
+
+		streams = append(streams, stream)
+	}
+	return streams, nil
+}
+
+func isLoopback(host string) bool {
+	ips, err := net.DefaultResolver.LookupIP(context.Background(), "ip", host)
+	if err != nil {
+		return false
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() {
+			return true
+		}
+	}
+	return false
 }

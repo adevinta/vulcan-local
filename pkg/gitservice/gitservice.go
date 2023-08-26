@@ -36,16 +36,18 @@ type gitMapping struct {
 }
 
 type gitService struct {
+	host     string
 	log      log.Logger
 	mappings map[string]*gitMapping
 	wg       sync.WaitGroup
 	mu       sync.Mutex
 }
 
-func New(l log.Logger) GitService {
+func New(host string, l log.Logger) GitService {
 	return &gitService{
-		mappings: make(map[string]*gitMapping),
+		host:     host,
 		log:      l,
+		mappings: make(map[string]*gitMapping),
 	}
 }
 
@@ -76,7 +78,8 @@ func (gs *gitService) AddGit(path string) (int, error) {
 		tmpDir: tmpDir,
 	}
 	gs.mappings[path] = &r
-	listener, err := net.Listen("tcp", "0.0.0.0:0")
+
+	listener, err := net.Listen("tcp", gs.host+":0")
 	if err != nil {
 		return 0, err
 	}
@@ -86,7 +89,7 @@ func (gs *gitService) AddGit(path string) (int, error) {
 	}
 	r.port = a.Port
 	gs.wg.Add(1)
-	gs.log.Debugf("Starting git server path=%s port=%d", path, r.port)
+	gs.log.Debugf("Starting git server path=%v addr=%v", path, listener.Addr())
 	go func() {
 		r.server.Serve(listener)
 		defer gs.wg.Done()
