@@ -19,7 +19,7 @@ import (
 
 	"github.com/adevinta/vulcan-agent/jobrunner"
 	"github.com/adevinta/vulcan-agent/log"
-	"github.com/adevinta/vulcan-agent/queue/sqs"
+	"github.com/adevinta/vulcan-agent/queue"
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
@@ -338,12 +338,7 @@ func AddAllChecks(cfg *config.Config, l log.Logger) error {
 	return nil
 }
 
-func SendJobs(jobs []jobrunner.Job, arn, endpoint string, l log.Logger) error {
-	qw, err := sqs.NewWriter(arn, endpoint, l)
-	if err != nil {
-		l.Errorf("error creating sqs writer %+v", err)
-		return err
-	}
+func SendJobs(jobs []jobrunner.Job, qw queue.Writer, l log.Logger) error {
 	for _, job := range jobs {
 		bytes, err := json.Marshal(job)
 		if err != nil {

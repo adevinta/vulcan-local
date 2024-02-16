@@ -6,9 +6,9 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
-	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -21,15 +21,17 @@ import (
 	"github.com/adevinta/vulcan-agent/backend/docker"
 	agentconfig "github.com/adevinta/vulcan-agent/config"
 	agentlog "github.com/adevinta/vulcan-agent/log"
+	"github.com/adevinta/vulcan-agent/queue"
+	"github.com/adevinta/vulcan-agent/queue/chanqueue"
+	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
+
 	"github.com/adevinta/vulcan-local/pkg/checktypes"
 	"github.com/adevinta/vulcan-local/pkg/config"
 	"github.com/adevinta/vulcan-local/pkg/generator"
 	"github.com/adevinta/vulcan-local/pkg/gitservice"
 	"github.com/adevinta/vulcan-local/pkg/reporting"
 	"github.com/adevinta/vulcan-local/pkg/results"
-	"github.com/adevinta/vulcan-local/pkg/sqsservice"
-	"github.com/docker/docker/client"
-	"github.com/sirupsen/logrus"
 )
 
 const defaultDockerHost = "host.docker.internal"
@@ -124,23 +126,14 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		return config.SuccessExitCode, nil
 	}
 
-	// AWS Credentials are required for sqs
-	os.Setenv("AWS_REGION", "local")
-	os.Setenv("AWS_SECRET_ACCESS_KEY", "TBD")
-	os.Setenv("AWS_ACCESS_KEY_ID", "TBD")
-
-	sqs, err := sqsservice.Start(log)
-	if err != nil {
-		return config.ErrorExitCode, fmt.Errorf("unable to parse start sqs server %w", err)
-	}
-	defer sqs.Shutdown()
-
 	results, err := results.Start(log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to start results server %+v", err)
 	}
+
 	log.Debug("Sending jobs to run")
-	err = generator.SendJobs(jobs, sqs.ArnChecks, sqs.Endpoint, log)
+	jobsQueue := chanqueue.New(nil)
+	err = generator.SendJobs(jobs, jobsQueue, log)
 	if err != nil {
 		return config.ErrorExitCode, fmt.Errorf("unable to send jobs to queue %+v", err)
 	}
@@ -168,17 +161,6 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 			MaxNoMsgsInterval:      5, // Low as all the messages will be in the queue before starting the agent.
 			MaxProcessMessageTimes: 1, // No retry
 			Timeout:                180,
-		},
-		SQSReader: agentconfig.SQSReader{
-			Endpoint:          sqs.Endpoint,
-			ARN:               sqs.ArnChecks,
-			PollingInterval:   3,
-			VisibilityTimeout: 120,
-			ProcessQuantum:    90,
-		},
-		SQSWriter: agentconfig.SQSWriter{
-			Endpoint: sqs.Endpoint,
-			ARN:      sqs.ArnStatus,
 		},
 		API: agentconfig.APIConfig{
 			Host: agentIP,
@@ -227,7 +209,12 @@ func Run(cfg *config.Config, log *logrus.Logger) (int, error) {
 		logAgent.SetFormatter(log.Formatter)
 		logAgent.SetLevel(logrus.ErrorLevel)
 	}
-	exit := agent.Run(agentConfig, results, backend, logAgent.WithField("comp", "agent"))
+
+	// Create a state queue and discard all messages.
+	stateQueue := chanqueue.New(queue.Discard())
+	stateQueue.StartReading(context.Background())
+
+	exit := agent.RunWithQueues(agentConfig, results, backend, stateQueue, jobsQueue, logAgent.WithField("comp", "agent"))
 	if exit != 0 {
 		return config.ErrorExitCode, fmt.Errorf("error running the agent exit=%d", exit)
 	}
