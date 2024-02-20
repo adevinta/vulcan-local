@@ -1,6 +1,6 @@
 module github.com/adevinta/vulcan-local
 
-go 1.21
+go 1.21.0
 
 toolchain go1.21.7
 
