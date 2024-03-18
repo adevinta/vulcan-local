@@ -7,7 +7,7 @@ toolchain go1.21.7
 require (
 	github.com/adevinta/vulcan-agent v1.2.5
 	github.com/adevinta/vulcan-report v1.0.0
-	github.com/adevinta/vulcan-types v1.2.10
+	github.com/adevinta/vulcan-types v1.2.11
 	github.com/docker/docker v25.0.4+incompatible
 	github.com/drone/envsubst v1.0.3
 	github.com/go-git/go-git/v5 v5.11.0

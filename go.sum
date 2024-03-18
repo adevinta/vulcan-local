@@ -21,8 +21,8 @@ github.com/adevinta/vulcan-metrics-client v1.0.1 h1:BAugnnRWvkA3vnuCX77W04PWhneZ
 github.com/adevinta/vulcan-metrics-client v1.0.1/go.mod h1:we8vxfPMYQqZtOy42PJxsWwv2DwruSaT/wwNMxkum8I=
 github.com/adevinta/vulcan-report v1.0.0 h1:44aICPZ+4svucgCSA5KmjlT3ZGzrvZXiSnkbnj6AC2k=
 github.com/adevinta/vulcan-report v1.0.0/go.mod h1:k34KaeoXc3H77WNMwI9F4F1G28hBjB95PeMUp9oHbEE=
-github.com/adevinta/vulcan-types v1.2.10 h1:kO7tQrBHW4iRFE7ydf3kJ+C0xi17PCVFsuYeFJl2/u8=
-github.com/adevinta/vulcan-types v1.2.10/go.mod h1:yvak8keAmVPGEifizUnQdl6LCSEU34QpieqoezRAjYg=
+github.com/adevinta/vulcan-types v1.2.11 h1:Jqd/L6gL+X1lLS2NivrnQOs4wlvbYE/Xw9ZxJxRoJ8U=
+github.com/adevinta/vulcan-types v1.2.11/go.mod h1:CFNWxeKdr7mVq0hbzstxBUPQIJ4iKvmQ4gqL/O1qDuI=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
